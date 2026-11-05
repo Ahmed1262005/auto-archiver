@@ -755,7 +755,7 @@ version = "8.5.0"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.10"
-groups = ["docs"]
+groups = ["main", "docs"]
 files = [
     {file = "click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"},
     {file = "click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34"},
@@ -1850,6 +1850,27 @@ files = [
 rsa = ["cryptography (>=3.0.0)"]
 signals = ["blinker (>=1.4.0)"]
 signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
+
+[[package]]
+name = "opencv-python"
+version = "4.13.0.92"
+description = "Wrapper package for OpenCV python bindings."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "opencv_python-4.13.0.92-cp37-abi3-macosx_13_0_arm64.whl", hash = "sha256:caf60c071ec391ba51ed00a4a920f996d0b64e3e46068aac1f646b5de0326a19"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-macosx_14_0_x86_64.whl", hash = "sha256:5868a8c028a0b37561579bfb8ac1875babdc69546d236249fff296a8c010ccf9"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:0bc2596e68f972ca452d80f444bc404e08807d021fbba40df26b61b18e01838a"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:402033cddf9d294693094de5ef532339f14ce821da3ad7df7c9f6e8316da32cf"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:bccaabf9eb7f897ca61880ce2869dcd9b25b72129c28478e7f2a5e8dee945616"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:620d602b8f7d8b8dab5f4b99c6eb353e78d3fb8b0f53db1bd258bb1aa001c1d5"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-win32.whl", hash = "sha256:372fe164a3148ac1ca51e5f3ad0541a4a276452273f503441d718fab9c5e5f59"},
+    {file = "opencv_python-4.13.0.92-cp37-abi3-win_amd64.whl", hash = "sha256:423d934c9fafb91aad38edf26efb46da91ffbc05f3f59c4b0c72e699720706f5"},
+]
+
+[package.dependencies]
+numpy = {version = ">=2", markers = "python_version >= \"3.9\""}
 
 [[package]]
 name = "opentimestamps"
@@ -3390,6 +3411,29 @@ coverage = ["coverage (>=7.6.1) ; python_version < \"3.9\"", "coverage (>=7.6.9)
 flake8 = ["flake8 (==5.0.4) ; python_version < \"3.9\"", "flake8 (==7.1.1) ; python_version >= \"3.9\"", "mccabe (==0.7.0)", "pycodestyle (==2.12.1) ; python_version >= \"3.9\"", "pycodestyle (==2.9.1) ; python_version < \"3.9\"", "pyflakes (==2.5.0) ; python_version < \"3.9\"", "pyflakes (==3.2.0) ; python_version >= \"3.9\""]
 
 [[package]]
+name = "scenedetect"
+version = "0.7.1"
+description = "Video scene cut/shot detection program and Python library (bundles the opencv-python OpenCV variant and the scenedetect CLI)."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "scenedetect-0.7.1-py3-none-any.whl", hash = "sha256:91b67902275b2e0d29a12f6d70435f04e0bd7852a6dc8a69c901c6069328dffa"},
+    {file = "scenedetect-0.7.1.tar.gz", hash = "sha256:2bc082056f231d35f9d5eed6d8077a5d417c77c2787d965d7f03be3802cb6f7f"},
+]
+
+[package.dependencies]
+click = ">=8.0,<8.3.0 || >8.3.0,<9.0"
+numpy = "*"
+opencv-python = "*"
+platformdirs = "*"
+tqdm = "*"
+
+[package.extras]
+moviepy = ["moviepy"]
+pyav = ["av (>=9.2)"]
+
+[[package]]
 name = "secretstorage"
 version = "3.5.0"
 description = "Python bindings to FreeDesktop.org Secret Service API"
@@ -4428,4 +4472,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "bc7f5d11dc10f3dfe882ac097f517ca0a14693558759b4ae5bc5a765f851d761"
+content-hash = "c61d51fab88c51b3e997f66cc401d76efc7e5b13622e46a9ff83179a41de4c23"
