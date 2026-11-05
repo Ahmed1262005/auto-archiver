@@ -1,5 +1,6 @@
 import json
 import os
+from collections import Counter
 from datetime import UTC, date, datetime, timedelta
 
 from google.cloud import bigquery
@@ -21,8 +22,8 @@ FROM `{TABLE}`, UNNEST(region_stats) rs
 WHERE advertiser_id IN UNNEST(@advertiser_ids) AND SAFE_CAST(rs.last_shown AS DATE) >= @since
 GROUP BY creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_name, ad_format_type,
   creative_page_url
-ORDER BY last_shown DESC
-LIMIT @max_rows
+QUALIFY ROW_NUMBER() OVER (PARTITION BY advertiser_id ORDER BY last_shown DESC) <= @max_rows_per_advertiser
+ORDER BY advertiser_id, last_shown DESC
 """
 
 
@@ -46,15 +47,16 @@ class GoogleATCFeeder(Feeder):
             query_parameters=[
                 bigquery.ArrayQueryParameter("advertiser_ids", "STRING", list(self.advertiser_ids)),
                 bigquery.ScalarQueryParameter("since", "DATE", since),
-                bigquery.ScalarQueryParameter("max_rows", "INT64", self.max_rows),
+                bigquery.ScalarQueryParameter("max_rows_per_advertiser", "INT64", self.max_rows_per_advertiser),
             ],
             maximum_bytes_billed=self.maximum_gb_billed * 10**9,
         )
         job = self._client().query(QUERY, job_config=config)
         rows = [dict(r) for r in job.result()]
         logger.info(f"google_atc_feeder: {len(rows)} creatives, {(job.total_bytes_billed or 0) / 1e9:.1f} GB billed")
-        if len(rows) >= self.max_rows:
-            logger.warning("google_atc_feeder hit max_rows; raise it or split advertiser_ids")
+        for advertiser_id, n in Counter(r["advertiser_id"] for r in rows).items():
+            if n >= self.max_rows_per_advertiser:
+                logger.warning(f"google_atc_feeder hit max_rows_per_advertiser for {advertiser_id}")
         return rows
 
     @staticmethod

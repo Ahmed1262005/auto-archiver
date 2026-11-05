@@ -40,6 +40,8 @@ def test_one_query_for_all_advertisers_with_byte_cap(setup_module, bq):
     assert config.maximum_bytes_billed == 60 * 10**9
     params = {p.name: p for p in config.query_parameters}
     assert params["advertiser_ids"].values == ["AR1", "AR2"]
+    assert params["max_rows_per_advertiser"].value == 2000
+    assert "PARTITION BY advertiser_id" in bq.query.call_args.args[0]
 
 
 def test_item_fields(setup_module, bq):

@@ -15,7 +15,11 @@
         },
         "project": {"default": None, "help": "GCP project billed for the query; defaults to the credentials' project"},
         "days_back": {"default": 7, "type": "int", "help": "creatives last shown within this many days"},
-        "max_rows": {"default": 5000, "type": "int", "help": "creative cap for the whole query"},
+        "max_rows_per_advertiser": {
+            "default": 2000,
+            "type": "int",
+            "help": "most recent creatives kept per advertiser, so a large advertiser cannot crowd out the others",
+        },
         "maximum_gb_billed": {
             "default": 80,
             "type": "int",
