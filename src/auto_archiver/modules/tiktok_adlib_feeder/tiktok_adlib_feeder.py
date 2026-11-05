@@ -10,7 +10,10 @@ from auto_archiver.utils.provider_errors import ProviderError
 
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 AD_QUERY_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/query/"
-AD_FIELDS = "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.videos,ad.image_urls,advertiser.business_id,advertiser.business_name"
+AD_FIELDS = (
+    "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.videos,ad.image_urls,ad.reach,"
+    "advertiser.business_id,advertiser.business_name,advertiser.paid_for_by"
+)
 AD_PAGE_URL = "https://library.tiktok.com/ads/detail/?ad_id={}"
 
 
