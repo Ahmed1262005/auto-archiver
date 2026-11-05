@@ -81,3 +81,12 @@ class TestDirectMediaExtractor(TestExtractorBase):
         item.set("media_urls", ["https://cdn/a.mp4", "https://cdn/b.mp4"])
         result = self.extractor.download(item)
         assert len(result.media) == 1
+
+    def test_explicit_empty_media_urls_is_metadata_only(self, mocker):
+        get = self.patch_get(mocker, FakeResponse())
+        item = Metadata().set_url("https://www.linkedin.com/ad-library/detail/1").set("media_urls", [])
+        result = self.extractor.download(item)
+        assert result.is_success()
+        assert result.status == "metadata_only: success"
+        assert not result.media
+        get.assert_not_called()

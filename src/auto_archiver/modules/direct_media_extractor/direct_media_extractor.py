@@ -10,7 +10,11 @@ from auto_archiver.utils.custom_logger import logger
 
 class DirectMediaExtractor(Extractor):
     def download(self, item: Metadata) -> Metadata | bool:
-        urls = item.get("media_urls") or [item.get_url()]
+        urls = item.get("media_urls")
+        if urls == []:
+            # the feeder states the source exposes no media; the record itself is the archive
+            return Metadata().success("metadata_only")
+        urls = urls or [item.get_url()]
         result = Metadata()
         for url in urls:
             if media := self._fetch(url):
