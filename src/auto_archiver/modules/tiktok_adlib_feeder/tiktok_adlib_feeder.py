@@ -15,6 +15,12 @@ AD_FIELDS = (
     "advertiser.business_id,advertiser.business_name,advertiser.paid_for_by"
 )
 AD_PAGE_URL = "https://library.tiktok.com/ads/detail/?ad_id={}"
+AD_DETAIL_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/detail/"
+# ad/query returns only the overall reach band; ad/detail adds reach by country, age and gender, and targeting
+AD_DETAIL_FIELDS = (
+    "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.status_statement,ad.reach,"
+    "ad_group.targeting_info,advertiser.business_id,advertiser.business_name,advertiser.paid_for_by"
+)
 
 
 def query_body(business_id: int, start: date, end: date, country_code: str, max_count: int, search_id=None) -> dict:
@@ -54,6 +60,34 @@ def parse_page(payload, status: int = 200) -> tuple[list, str | None]:
     if not data.get("search_id"):
         raise ProviderError("TikTok ad query: has_more without search_id", status=status, schema=True)
     return data.get("ads") or [], data["search_id"]
+
+
+def detail_body(ad_id) -> dict:
+    return {"ad_id": int(ad_id)}
+
+
+def parse_detail(payload, status: int = 200) -> dict:
+    """`data` of one ad/detail response ({"ad", "ad_group", "advertiser"}); raises ProviderError on error envelopes."""
+    if not isinstance(payload, dict):
+        raise ProviderError("TikTok ad detail: response is not a JSON object", status=status, schema=True)
+    error = payload.get("error") or {}
+    if not isinstance(error, dict):
+        error = {"code": str(error), "message": payload.get("error_description")}
+    if status != 200 or error.get("code") not in (None, "ok"):
+        raise ProviderError(
+            f"TikTok ad detail failed: HTTP {status} {error.get('code')} {error.get('message')}",
+            status=status,
+            code=error.get("code"),
+        )
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("ad"), dict) or "id" not in data["ad"]:
+        raise ProviderError("TikTok ad detail: data.ad missing or has no id", status=status, schema=True)
+    for key in ("reach",):
+        if data["ad"].get(key) is not None and not isinstance(data["ad"][key], dict):
+            raise ProviderError(f"TikTok ad detail: ad.{key} is not an object", status=status, schema=True)
+    if data.get("ad_group") is not None and not isinstance(data["ad_group"], dict):
+        raise ProviderError("TikTok ad detail: ad_group is not an object", status=status, schema=True)
+    return data
 
 
 class TikTokAdLibFeeder(Feeder):
