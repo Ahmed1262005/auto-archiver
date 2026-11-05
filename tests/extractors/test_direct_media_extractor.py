@@ -65,3 +65,19 @@ class TestDirectMediaExtractor(TestExtractorBase):
     def test_request_exception_fails(self, mocker):
         mocker.patch("requests.get", side_effect=requests.ConnectionError("boom"))
         assert self.extractor.download(Metadata().set_url(SIGNED_URL)) is False
+
+    def test_downloads_all_media_urls(self, mocker):
+        get = self.patch_get(mocker, FakeResponse())
+        get.side_effect = [FakeResponse(), FakeResponse(content_type="image/jpeg")]
+        item = Metadata().set_url("https://library.tiktok.com/ads/detail/?ad_id=1")
+        item.set("media_urls", ["https://cdn/a.mp4", "https://cdn/b.jpg"])
+        result = self.extractor.download(item)
+        assert result.is_success()
+        assert [m.get("source_url") for m in result.media] == ["https://cdn/a.mp4", "https://cdn/b.jpg"]
+
+    def test_partial_media_urls_still_succeed(self, mocker):
+        mocker.patch("requests.get", side_effect=[FakeResponse(status=403), FakeResponse()])
+        item = Metadata().set_url("https://library.tiktok.com/ads/detail/?ad_id=1")
+        item.set("media_urls", ["https://cdn/a.mp4", "https://cdn/b.mp4"])
+        result = self.extractor.download(item)
+        assert len(result.media) == 1
