@@ -29,6 +29,7 @@ dependencies = [
     "ffmpeg-python (>=0.0.0)",
     "telethon (>=0.0.0)",
     "google-api-python-client (>=0.0.0)",
+    "google-cloud-bigquery (>=3.0.0)",
     "google-auth-httplib2 (>=0.0.0)",
     "google-auth-oauthlib (>=0.0.0)",
     "oauth2client (>=0.0.0)",
