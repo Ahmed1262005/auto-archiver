@@ -62,6 +62,12 @@ dependencies = [
     "pyperclip (>=1.9.0)", 
 ]
 
+[project.optional-dependencies]
+transcription = [
+    "faster-whisper (==1.2.1)",
+    "av (>=11,<16)",
+]
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 autopep8 = "^2.3.1"
