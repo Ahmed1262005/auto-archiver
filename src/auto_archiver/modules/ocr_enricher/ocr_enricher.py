@@ -1,11 +1,12 @@
-"""On-screen text (OCR) for images and video frames, using PaddleOCR.
+"""On-screen text (OCR) for images and video frames, using RapidOCR (PP-OCR models on ONNX Runtime).
 
 `analyze(path, **opts)` is the pure entry point: it samples frames with ffmpeg (or reads the image, or the
-stills it is given), runs one PaddleOCR pipeline per requested language and returns a JSON-serialisable dict.
+stills it is given), runs one RapidOCR pipeline per requested language and returns a JSON-serialisable dict.
 `OcrEnricher.enrich` calls it for every image/video `Media` and stores the result under `ocr`.
 """
 
 import difflib
+import importlib.metadata
 import json
 import os
 import re
@@ -22,20 +23,21 @@ from auto_archiver.core import Enricher, Metadata
 from auto_archiver.utils.custom_logger import logger
 from auto_archiver.utils.enricher_errors import EnricherInputError, EnricherServiceError
 
-TOOL = "paddleocr"
+TOOL = "rapidocr"
 
-# script groups -> PaddleOCR `lang` codes; any other value is passed to PaddleOCR as a raw lang code
+# script groups -> (PP-OCR version, recogniser lang). PP-OCRv6's multilingual recogniser reads Latin, Chinese and
+# Japanese; Arabic and Korean need PP-OCRv5 mobile recognisers. Any other value is tried as a raw RapidOCR lang code.
 LANGUAGE_GROUPS = {
-    "latin": "en",
-    "arabic": "ar",
-    "chinese": "ch",
-    "japanese": "japan",
-    "korean": "korean",
+    "latin": ("PP-OCRv6", "en"),
+    "chinese": ("PP-OCRv6", "ch"),
+    "japanese": ("PP-OCRv6", "japan"),
+    "arabic": ("PP-OCRv5", "arabic"),
+    "korean": ("PP-OCRv5", "korean"),
 }
 
 # scripts each recogniser is trusted to output; letters in any other script are misreads (e.g. Han glyphs
 # from the Chinese+English PP-OCRv6 model on a Latin-only frame) and the line is dropped. Digit/symbol-only
-# lines have no script and are kept. Raw PaddleOCR lang codes are not filtered.
+# lines have no script and are kept. Raw lang codes are not filtered.
 EXPECTED_SCRIPTS = {
     "latin": {"Latin"},
     "arabic": {"Arabic", "Latin"},
@@ -49,9 +51,10 @@ DEFAULTS = {
     "fps": 1.0,
     "min_confidence": 0.6,
     "max_frames": 0,
-    "device": "cpu",
+    "model_type": "small",
     "cpu_threads": 0,
     "ocr_version": None,
+    "model_dir": os.environ.get("OCR_MODEL_DIR") or None,
     "timeout": 600,
 }
 
@@ -62,7 +65,7 @@ _SHOWINFO_PTS = re.compile(r"\bn:\s*(\d+)\b.*?\bpts_time:\s*(-?[\d.]+)")
 
 def analyze(path: str, **opts) -> dict:
     """OCR an image or a video file. Options (all optional): languages, fps, min_confidence, max_frames,
-    device, cpu_threads, ocr_version, timeout, stills=[(timestamp, image_path), ...] to OCR given stills
+    model_type, cpu_threads, ocr_version, model_dir, timeout, stills=[(timestamp, image_path), ...] to OCR given stills
     instead of sampling the video. Raises EnricherInputError / EnricherServiceError."""
     unknown = set(opts) - set(DEFAULTS) - {"stills"}
     if unknown:
@@ -94,8 +97,8 @@ def analyze(path: str, **opts) -> dict:
     models = {lang: m for lang, (_ocr, m) in pipelines.items()}
     return {
         "tool": TOOL,
-        "tool_version": _version("paddleocr"),
-        "paddlepaddle_version": _version("paddle"),
+        "tool_version": _version("rapidocr"),
+        "onnxruntime_version": _version("onnxruntime"),
         "model": "; ".join(f"{m['det']}+{m['rec']}" for m in models.values()),
         "models": models,
         **media,
@@ -140,10 +143,10 @@ def _languages(value) -> tuple:
     return langs
 
 
-def _version(module: str):
+def _version(dist: str):
     try:
-        return __import__(module).__version__
-    except Exception:
+        return importlib.metadata.version(dist)
+    except importlib.metadata.PackageNotFoundError:
         return None
 
 
@@ -289,47 +292,90 @@ def _extract(path: str, vf: str, max_frames: int, out_dir: str, timeout: int, st
 # ---------- OCR ----------
 
 
+def _route(lang: str, o: dict):
+    """(PP-OCR version, model size, det lang, rec lang, det model, rec model) for a language, or ValueError."""
+    from rapidocr.utils.model_resolver import route_to_model_key
+    from rapidocr.utils.typings import ModelType, OCRVersion, TaskType
+
+    version, rec_lang = LANGUAGE_GROUPS.get(lang, (None, lang))
+    versions = [o["ocr_version"]] if o["ocr_version"] else [version] if version else ["PP-OCRv6", "PP-OCRv5"]
+    for v in versions:
+        size = o["model_type"] if v == "PP-OCRv6" else "mobile"
+        det_lang = "en" if v == "PP-OCRv6" else "multi"
+        try:
+            det = route_to_model_key(TaskType.DET, OCRVersion(v), det_lang, ModelType(size))
+            rec = route_to_model_key(TaskType.REC, OCRVersion(v), rec_lang, ModelType(size))
+        except ValueError:
+            continue
+        if det and rec:
+            return v, size, det_lang, rec_lang, det, rec
+    raise ValueError(f"RapidOCR has no model for language {lang!r}")
+
+
+def _enum(cls, value):
+    try:
+        return cls(value)
+    except ValueError:
+        return value
+
+
 def _pipeline(lang: str, o: dict):
-    """(PaddleOCR instance, {"det", "rec"} model names), cached per process; a load failure is a service error."""
-    key = (lang, o["ocr_version"], o["device"], int(o["cpu_threads"] or 0))
+    """(RapidOCR instance, {"det", "rec"} model names), cached per process; a load failure is a service error."""
+    key = (lang, o["ocr_version"], o["model_type"], int(o["cpu_threads"] or 0), o["model_dir"])
     with _PIPELINES_LOCK:
         if key in _PIPELINES:
             return _PIPELINES[key]
         try:
-            from paddleocr import PaddleOCR
+            from rapidocr import RapidOCR
+            from rapidocr.utils.download_file import DownloadFileException
+            from rapidocr.utils.typings import LangDet, LangRec, ModelType, OCRVersion
         except ImportError as e:
             raise EnricherServiceError(
-                "paddleocr is not installed (see ocr_enricher/requirements.txt)", reason="tool_missing"
+                "rapidocr is not installed (see ocr_enricher/requirements.txt)", reason="tool_missing"
             ) from e
-        kwargs = {
-            "lang": LANGUAGE_GROUPS.get(lang, lang),
-            "ocr_version": o["ocr_version"],
-            "device": o["device"],
-            "use_doc_orientation_classify": False,
-            "use_doc_unwarping": False,
-            "use_textline_orientation": False,
+        version, size, det_lang, rec_lang, det, rec = _route(lang, o)
+        params = {
+            "Global.use_cls": False,
+            "Global.text_score": 0.0,
+            "Global.log_level": "warning",
+            "Det.ocr_version": OCRVersion(version),
+            "Det.model_type": ModelType(size),
+            "Det.lang_type": _enum(LangDet, det_lang),
+            "Rec.ocr_version": OCRVersion(version),
+            "Rec.model_type": ModelType(size),
+            "Rec.lang_type": _enum(LangRec, rec_lang),
+            "EngineConfig.onnxruntime.intra_op_num_threads": int(o["cpu_threads"] or -1),
         }
-        if o["cpu_threads"]:
-            kwargs["cpu_threads"] = int(o["cpu_threads"])
+        if o["model_dir"]:
+            os.makedirs(o["model_dir"], exist_ok=True)
+            params["Global.model_root_dir"] = o["model_dir"]
         try:
-            ocr = PaddleOCR(**kwargs)
-        except ValueError as e:
-            if "No models are available" in str(e):
-                raise ValueError(f"PaddleOCR has no model for language {lang!r}") from e
-            raise EnricherServiceError(f"PaddleOCR failed to load for {lang!r}: {e}", reason="model_load_failed") from e
+            ocr = RapidOCR(params=params)
+            # models load lazily on first use; load them now so a missing model fails here, not mid-video
+            ocr._load_det_model()
+            ocr._load_rec_model()
         except MemoryError as e:
-            raise EnricherServiceError("out of memory loading PaddleOCR", reason="out_of_memory") from e
-        except Exception as e:
+            raise EnricherServiceError("out of memory loading RapidOCR", reason="out_of_memory") from e
+        except DownloadFileException as e:
             raise EnricherServiceError(
-                f"PaddleOCR models for {lang!r} unavailable: {_root_cause(e)}", reason="model_unavailable"
+                f"RapidOCR models for {lang!r} unavailable: {_root_cause(e)}", reason="model_unavailable"
             ) from e
-        sub = ocr._merged_paddlex_config.get("SubModules", {})
-        models = {
-            "det": sub.get("TextDetection", {}).get("model_name"),
-            "rec": sub.get("TextRecognition", {}).get("model_name"),
-        }
-        _PIPELINES[key] = (ocr, models)
+        except Exception as e:
+            if _onnx_error(e):  # a truncated or non-model download; rapidocr re-downloads it next time (sha256 check)
+                raise EnricherServiceError(
+                    f"RapidOCR models for {lang!r} unavailable: {_root_cause(e)}", reason="model_unavailable"
+                ) from e
+            raise EnricherServiceError(f"RapidOCR failed to load for {lang!r}: {e}", reason="model_load_failed") from e
+        _PIPELINES[key] = (ocr, {"det": det, "rec": rec})
         return _PIPELINES[key]
+
+
+def _onnx_error(e: BaseException) -> bool:
+    while e is not None:
+        if type(e).__module__.startswith("onnxruntime") or "ONNXRuntimeError" in type(e).__name__:
+            return True
+        e = e.__cause__ or e.__context__
+    return False
 
 
 def _root_cause(e: BaseException) -> str:
@@ -342,15 +388,14 @@ def _root_cause(e: BaseException) -> str:
 
 def _ocr_frame(ocr, lang: str, image, min_confidence: float) -> list:
     try:
-        results = ocr.predict(image)
+        res = ocr(image)
     except MemoryError as e:
         raise EnricherServiceError("out of memory during OCR", reason="out_of_memory") from e
     except Exception as e:
-        raise EnricherServiceError(f"PaddleOCR predict failed: {e}", reason="ocr_failed") from e
+        raise EnricherServiceError(f"RapidOCR failed: {e}", reason="ocr_failed") from e
     lines = []
-    for res in results or []:
-        texts, scores, polys = res["rec_texts"], res["rec_scores"], res["rec_polys"]
-        for text, score, poly in zip(texts, scores, polys):
+    if getattr(res, "boxes", None) is not None and res.txts:
+        for text, score, poly in zip(res.txts, res.scores, res.boxes):
             text = unicodedata.normalize("NFC", str(text)).strip()
             if not text or float(score) < min_confidence:
                 continue
@@ -463,4 +508,4 @@ def _timeline(frames: list) -> list:
     return entries
 
 
-__all__ = ["analyze", "OcrEnricher", "EnricherInputError", "EnricherServiceError"]
+__all__ = ["EnricherInputError", "EnricherServiceError", "OcrEnricher", "analyze"]
