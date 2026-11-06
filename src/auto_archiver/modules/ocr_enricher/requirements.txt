@@ -1,5 +1,5 @@
-# Pinned, CPU-only runtime for ocr_enricher (all Apache-2.0).
-# paddlepaddle 3.3.x fails on CPU with oneDNN enabled ("ConvertPirAttribute2RuntimeAttribute not support"), so stay on 3.2.2.
-paddleocr==3.7.0
-paddlex==3.7.2
-paddlepaddle==3.2.2
+# Pinned, CPU-only runtime for ocr_enricher. RapidOCR runs the PP-OCR models on ONNX Runtime, so there is no
+# PaddlePaddle dependency. rapidocr / onnxruntime: Apache-2.0 / MIT; python-bidi (Arabic, Hebrew lines): LGPL-3.0.
+rapidocr==3.10.0
+onnxruntime==1.31.1
+python-bidi==0.6.12
