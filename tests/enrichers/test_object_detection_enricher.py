@@ -254,3 +254,13 @@ def test_wordmarks_name_or_add_logos():
     apart = dict(inside, box=[0.2, 0.8, 0.6, 0.9], brand="Gucci", text="GUCCI")
     out = od._merge_wordmarks([dict(owl)], [inside, apart])
     assert [(d["label"], d["brand"]) for d in out] == [("logo", "Samsung"), ("wordmark", "Gucci")]
+
+
+def test_wordmarks_skip_captions_that_mention_the_brand(mocker):
+    lines = [{"text": "Samsung completely touchscreen tablet", "confidence": 0.99, "box": [78, 496, 473, 527]},
+             {"text": "SAMSUNG", "confidence": 0.95, "box": [200, 900, 380, 940]},
+             {"text": "SAMSUND", "confidence": 0.8, "box": [200, 100, 380, 140]}]  # fmt: skip
+    mocker.patch.object(od._ocr, "_ocr_frame", return_value=lines)
+    found = od._wordmarks(None, od.np.zeros((1024, 576, 3), od.np.uint8), ["Samsung", "Gucci"])
+    assert [(d["text"], d["brand"]) for d in found] == [("SAMSUNG", "Samsung"), ("SAMSUND", "Samsung")]
+    assert found[0]["box"] == [round(200 / 576, 4), round(900 / 1024, 4), round(380 / 576, 4), round(940 / 1024, 4)]

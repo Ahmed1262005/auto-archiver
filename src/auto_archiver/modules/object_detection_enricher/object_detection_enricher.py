@@ -406,7 +406,8 @@ def _wordmarks(ocr, bgr: np.ndarray, brands: list) -> list:
     found = []
     for line in _ocr._ocr_frame(ocr, "latin", bgr, 0.6):
         brand, s = _text_brand(line["text"], brands)
-        if brand:
+        # a caption that mentions the brand ("Samsung completely touchscreen tablet") is not a wordmark
+        if brand and len(_canon(line["text"])) <= len(_canon(brand)) + 6:
             x0, y0, x1, y1 = line["box"]
             found.append({"label": "wordmark", "score": line["confidence"], "box": _norm_box((x0, y0, x1, y1), w, h),
                           "brand": brand, "brand_score": s, "brand_source": "ocr", "text": line["text"]})  # fmt: skip
