@@ -68,7 +68,8 @@ def test_follows_after_cursor_until_no_next(feeder, mocker):
     get = mocker.patch("requests.get", side_effect=[page([ad(1), ad(2)], after="C1"), page([ad(3)])])
     assert [i.get("source_ad_id") for i in feeder] == ["1", "2", "3"]
     first, second = (c.kwargs["params"] for c in get.call_args_list)
-    assert "after" not in first and second["after"] == "C1" and first["access_token"] == TOKEN
+    assert get.call_args_list[0].kwargs["headers"] == {"Authorization": f"Bearer {TOKEN}"}
+    assert "after" not in first and second["after"] == "C1" and "access_token" not in first
 
 
 def test_empty_page_ends(feeder, mocker):

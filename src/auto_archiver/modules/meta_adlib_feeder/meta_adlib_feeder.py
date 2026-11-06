@@ -140,7 +140,8 @@ class MetaAdLibFeeder(Feeder):
     def _get(self, params: dict) -> tuple[list, str | None]:
         r = requests.get(
             GRAPH_URL.format(version=self.graph_version),
-            params={**params, "access_token": self.access_token},
+            params=params,
+            headers={"Authorization": f"Bearer {self.access_token}"},  # never in the URL
             timeout=self.timeout,
         )
         try:
