@@ -21,7 +21,9 @@
 Feeds one item per ad from LinkedIn's official Ad Library API (`/rest/adLibrary?q=criteria&advertiser=...`)
 for a list of advertiser names over a recent date window. It queries by advertiser rather than keyword, because
 keyword search mostly returns other companies' ads that mention the term. Each item's URL is the ad's public
-library page and the provider record is kept under `raw`. The API returns no creative media links, so these items
-carry metadata only. A failed API call raises instead of yielding nothing.
+library page and the provider record is kept under `raw`. The API returns no creative media links, content or post URN
+(checked against the full 202610 schema), so these items carry metadata only (`creative_status`:
+`not_provided_by_api`). Any field outside that schema is listed in `unmapped_fields` and logged, so a creative field
+LinkedIn adds later is noticed. A failed API call raises instead of yielding nothing.
 """,
 }
