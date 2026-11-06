@@ -1,0 +1,5 @@
+# Pinned, CPU-only runtime for ocr_enricher (all Apache-2.0).
+# paddlepaddle 3.3.x fails on CPU with oneDNN enabled ("ConvertPirAttribute2RuntimeAttribute not support"), so stay on 3.2.2.
+paddleocr==3.7.0
+paddlex==3.7.2
+paddlepaddle==3.2.2
