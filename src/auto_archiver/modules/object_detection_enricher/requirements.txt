@@ -1,0 +1,6 @@
+# CPU-only torch wheels: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+-r ../ocr_enricher/requirements.txt
+torch==2.15.0
+transformers==5.22.1
+safetensors==0.8.0
+scipy==1.18.1
