@@ -182,7 +182,7 @@ def test_runtime_not_installed(fx, mocker, module):
     mocker.patch.dict(od._MODELS, clear=True)
     mocker.patch.dict("sys.modules", {module: None})
     with pytest.raises(EnricherServiceError) as e:
-        analyze(fx["blank"], layers=["objects"])
+        analyze(fx["blank"], layers=["objects", "logos"])  # rf-detr objects need no transformers; OWLv2 logos do
     assert e.value.reason == "tool_missing"
 
 
