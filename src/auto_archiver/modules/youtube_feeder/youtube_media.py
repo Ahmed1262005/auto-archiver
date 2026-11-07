@@ -26,7 +26,8 @@ FAILED = "failed"  # anything else, usually yt-dlp out of date with a YouTube ch
 FORMAT = "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b"
 
 REASONS = [
-    (BLOCKED, r"not a bot|HTTP Error 429|Too Many Requests"),
+    # googlevideo answers 403 when a stream URL's signature or PO token is rejected; a later attempt usually works
+    (BLOCKED, r"not a bot|HTTP Error 429|Too Many Requests|HTTP Error 403"),
     (TRANSIENT, r"HTTP Error 5\d\d|timed out|Connection|Temporary failure|IncompleteRead|Remote end closed"),
     (
         UNAVAILABLE,

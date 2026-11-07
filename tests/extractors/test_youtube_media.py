@@ -58,6 +58,7 @@ def test_downloads_into_out_dir(tmp_path):
         ("ERROR: [youtube] abc: Private video. Sign in if you've been granted access to this video", ym.UNAVAILABLE),
         ("ERROR: [youtube] abc: Sign in to confirm you’re not a bot. Use --cookies-from-browser", ym.BLOCKED),
         ("ERROR: unable to download video data: HTTP Error 429: Too Many Requests", ym.BLOCKED),
+        ("ERROR: unable to download video data: HTTP Error 403: Forbidden", ym.BLOCKED),  # recorded 2026-11-07
         ("ERROR: unable to download video data: HTTP Error 503: Service Unavailable", TRANSIENT),
         ("ERROR: [youtube] abc: Read timed out.", TRANSIENT),
         ("ERROR: [youtube] abc: Requested format is not available", ym.UNAVAILABLE),
