@@ -14,7 +14,8 @@ CHANNELS_URL = f"{API}/channels"
 PLAYLIST_ITEMS_URL = f"{API}/playlistItems"
 VIDEOS_URL = f"{API}/videos"
 # https://developers.google.com/youtube/v3/determine_quota_cost (default project quota: 10,000 units/day)
-QUOTA_UNITS = {CHANNELS_URL: 1, PLAYLIST_ITEMS_URL: 1, VIDEOS_URL: 1}
+PLAYLISTS_URL = f"{API}/playlists"
+QUOTA_UNITS = {CHANNELS_URL: 1, PLAYLIST_ITEMS_URL: 1, VIDEOS_URL: 1, PLAYLISTS_URL: 1}
 VIDEO_PARTS = "snippet,contentDetails,status,statistics,topicDetails"
 WATCH_URL = "https://www.youtube.com/watch?v={}"
 EMBED_URL = "https://www.youtube.com/embed/{}"
@@ -109,6 +110,20 @@ def channel_params(channel_id: str) -> dict:
 def playlist_params(playlist_id: str, page_token: str | None = None, max_results: int = 50) -> dict:
     p = {"part": "snippet,contentDetails,status", "playlistId": playlist_id, "maxResults": max_results}
     return p | ({"pageToken": page_token} if page_token else {})
+
+
+def playlists_params(channel_id: str, page_token: str | None = None, max_results: int = 50) -> dict:
+    p = {"part": "snippet,contentDetails", "channelId": channel_id, "maxResults": max_results}
+    return p | ({"pageToken": page_token} if page_token else {})
+
+
+def parse_playlists(payload) -> tuple[list[str], str | None]:
+    """(playlist ids, next page token or None) from playlists.list. Brand playlists are where unlisted videos
+    (often the ones that ran as ads) are linked; the uploads playlist only lists public uploads."""
+    items = _items(payload, "playlists.list")
+    ids = [i["id"] for i in items if isinstance(i.get("id"), str)]
+    token = payload.get("nextPageToken")
+    return ids, token if isinstance(token, str) and token else None
 
 
 def videos_params(ids: list[str]) -> dict:

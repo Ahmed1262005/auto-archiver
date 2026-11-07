@@ -88,3 +88,26 @@ def test_no_file_is_empty(tmp_path):
     with pytest.raises(MediaFetchError) as e:
         ym.fetch_media(URL, str(tmp_path), ydl_factory=FakeYDL(write=None))
     assert e.value.reason == EMPTY
+
+
+def test_cookiefile_and_extractor_args(tmp_path):
+    fake = FakeYDL()
+    ym.fetch_media(
+        URL,
+        str(tmp_path),
+        cookiefile="/run/yt/cookies.txt",
+        extractor_args={"youtube": {"player_client": ["web"]}},
+        ydl_factory=fake,
+    )
+    assert fake.opts["cookiefile"] == "/run/yt/cookies.txt"
+    assert fake.opts["extractor_args"]["youtube"]["player_client"] == ["web"]
+    assert ym.ydl_options(str(tmp_path)).get("cookiefile") is None
+
+
+def test_rejected_cookies_reason():
+    msg = "WARNING: [youtube] The provided YouTube account cookies are no longer valid. They have likely been rotated"
+    assert ym.media_reason(msg) == ym.COOKIES_INVALID
+
+
+def test_prefers_h264():
+    assert ym.FORMAT.startswith("bv*[height<=720][vcodec^=avc1]")
