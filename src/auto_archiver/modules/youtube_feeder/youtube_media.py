@@ -22,8 +22,12 @@ UNAVAILABLE = "unavailable"  # removed, private, age/members-gated, live or upco
 BLOCKED = "blocked"  # YouTube's bot check or HTTP 429: back off
 FAILED = "failed"  # anything else, usually yt-dlp out of date with a YouTube change
 
-# 720p is enough for every enricher; mp4/m4a first so the merge is a remux, not a re-encode
-FORMAT = "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b"
+# 720p is enough for every enricher. H.264 + m4a first: the merge is a remux, and every decoder in the pipeline
+# (OpenCV, ffmpeg without dav1d, Encore) reads it; YouTube's other <=720p mp4 video streams are often AV1.
+FORMAT = (
+    "bv*[height<=720][vcodec^=avc1]+ba[ext=m4a]/b[height<=720][vcodec^=avc1]"
+    "/bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720]/b"
+)
 
 REASONS = [
     # googlevideo answers 403 when a stream URL's signature or PO token is rejected; a later attempt usually works
