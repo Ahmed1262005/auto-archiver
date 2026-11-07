@@ -1,7 +1,7 @@
-"""object_detection_enricher: real RT-DETRv2 / OWLv2 / SigLIP 2 runs on ffmpeg fixtures and (when present) real ad frames.
+"""object_detection_enricher: real RF-DETR-S / RT-DETRv2 / OWLv2 / SigLIP 2 runs on ffmpeg fixtures and (when present) real ad frames.
 
 Skipped when torch/transformers are not installed (see object_detection_enricher/requirements.txt). Models download
-from the Hugging Face Hub on first run. Real ad keyframes are read from $OD_REAL_FRAMES_DIR (*.jpg, and optional
+from the Hugging Face Hub (RF-DETR: Roboflow's CDN) on first run. Real ad keyframes are read from $OD_REAL_FRAMES_DIR (*.jpg, and optional
 brand reference logos in $OD_REAL_FRAMES_DIR/brand_refs/<brand>/*); they are never committed (this repo is public).
 """
 
@@ -14,6 +14,7 @@ import pytest
 
 pytest.importorskip("torch")
 pytest.importorskip("transformers")
+pytest.importorskip("rfdetr")
 pytest.importorskip("rapidocr")
 if not shutil.which("ffmpeg"):
     pytest.skip("ffmpeg not installed", allow_module_level=True)
@@ -25,6 +26,7 @@ from auto_archiver.utils.enricher_errors import EnricherInputError, EnricherServ
 
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 REAL_DIR = os.environ.get("OD_REAL_FRAMES_DIR", "")
+RTDETR = "PekingU/rtdetr_v2_r18vd"
 
 
 def ff(*args):
@@ -164,7 +166,7 @@ def test_offline_cache_miss_is_model_unavailable(fx, tmp_path, monkeypatch):
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
     with pytest.raises(EnricherServiceError) as e:
-        analyze(fx["blank"], layers=["objects"], model_dir=str(tmp_path / "empty_cache"))
+        analyze(fx["blank"], layers=["objects"], object_model=RTDETR, model_dir=str(tmp_path / "empty_cache"))
     assert e.value.reason == "model_unavailable"
 
 
@@ -175,7 +177,7 @@ def test_wrong_head_is_model_unavailable(fx):
     assert e.value.reason == "model_unavailable"
 
 
-@pytest.mark.parametrize("module", ["torch", "transformers"])
+@pytest.mark.parametrize("module", ["torch", "transformers", "rfdetr"])
 def test_runtime_not_installed(fx, mocker, module):
     mocker.patch.dict(od._MODELS, clear=True)
     mocker.patch.dict("sys.modules", {module: None})
@@ -191,8 +193,62 @@ def test_runtime_not_installed(fx, mocker, module):
      (ImportError("Owlv2ImageProcessor requires the scipy library"), "tool_missing")],
 )  # fmt: skip
 def test_inference_crash(fx, mocker, exc, reason):
-    model, proc = od._load("closed", od.DEFAULTS["object_model"], od.DEFAULTS)
+    model, proc = od._load("closed", RTDETR, od.DEFAULTS)
     mocker.patch.object(type(model), "forward", side_effect=exc)
+    with pytest.raises(EnricherServiceError) as e:
+        analyze(fx["blank"], layers=["objects"], object_model=RTDETR)
+    assert e.value.reason == reason
+
+
+def test_rfdetr_default_and_rtdetr_selectable(fx):
+    r = analyze(fx["blank"], layers=["objects"])
+    assert r["models"]["objects"]["id"] == "rf-detr-small" and r["models"]["objects"]["architecture"] == "rf-detr"
+    assert r["models"]["objects"]["revision"].startswith("md5:") and r["rfdetr_version"] == "1.12.0"
+    r = analyze(fx["blank"], layers=["objects"], object_model=RTDETR)
+    assert r["models"]["objects"]["architecture"] == "rt_detr_v2" and r["rfdetr_version"] is None
+
+
+def test_rfdetr_boxes_normalised_and_labelled(mocker):
+    import numpy as np
+    import supervision as sv
+    from PIL import Image
+
+    d = sv.Detections(
+        xyxy=np.array([[-5.0, 10.0, 100.0, 300.0], [50.0, 50.0, 50.0, 80.0], [10.0, 20.0, 210.0, 420.0]]),
+        confidence=np.array([0.6, 0.9, 0.95]),
+        class_id=np.array([1, 77, 3]),
+        data={"class_name": np.array(["person", "cell phone", "car"])},
+    )
+    det = {"kind": "rfdetr", "model": mocker.Mock(predict=mocker.Mock(return_value=d))}
+    out = od._detect(od._torch(1), det, Image.new("RGB", (200, 400)), None, 0.5)
+    assert out == [{"label": "car", "score": 0.95, "box": [0.05, 0.05, 1.0, 1.0]},
+                   {"label": "person", "score": 0.6, "box": [0.0, 0.025, 0.5, 0.75]}]  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "exc, reason",
+    [(OSError("Failed to establish a new connection"), "model_unavailable"),
+     (ValueError("MD5 mismatch for rf-detr-small.pth"), "model_unavailable"),
+     (MemoryError(), "out_of_memory")],
+)  # fmt: skip
+def test_rfdetr_load_failure(fx, mocker, exc, reason):
+    import rfdetr
+
+    mocker.patch.dict(od._MODELS, clear=True)
+    mocker.patch.object(rfdetr, "RFDETRSmall", side_effect=exc)
+    with pytest.raises(EnricherServiceError) as e:
+        analyze(fx["blank"], layers=["objects"])
+    assert e.value.reason == reason
+
+
+@pytest.mark.parametrize(
+    "exc, reason",
+    [(RuntimeError("DefaultCPUAllocator: can't allocate memory"), "out_of_memory"),
+     (RuntimeError("shape mismatch in decoder"), "detection_failed")],
+)  # fmt: skip
+def test_rfdetr_inference_crash(fx, mocker, exc, reason):
+    det = od._rfdetr("rf-detr-small", od.DEFAULTS)
+    mocker.patch.object(det["model"], "predict", side_effect=exc)
     with pytest.raises(EnricherServiceError) as e:
         analyze(fx["blank"], layers=["objects"])
     assert e.value.reason == reason

@@ -1,6 +1,7 @@
-"""Object and logo detection on images and video frames, on CPU, with Hugging Face transformers detectors.
+"""Object and logo detection on images and video frames, on CPU.
 
-Objects come from a closed-set COCO detector (RT-DETRv2 by default); logos from an open-vocabulary detector
+Objects come from a closed-set COCO detector: RF-DETR-S (Roboflow `rfdetr`) by default, or any Hugging Face
+transformers detector such as RT-DETRv2 (`object_model="PekingU/rtdetr_v2_r18vd"`); logos from an open-vocabulary detector
 prompted with "logo" (OWLv2 by default). A logo box gets a brand when the OCR text inside it, or its SigLIP 2
 embedding against a folder of reference logos, matches a known brand. Frames are sampled exactly like
 ocr_enricher (source timestamps), so the OCR boxes line up with these boxes in a viewer.
@@ -24,12 +25,19 @@ from auto_archiver.utils.enricher_errors import EnricherInputError, EnricherServ
 TOOL = "transformers"
 LAYERS = ("objects", "logos")
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp")
+# object_model names served by the `rfdetr` package (COCO checkpoints); any other name is a Hugging Face id
+RFDETR_MODELS = {
+    "rf-detr-nano": "RFDETRNano",
+    "rf-detr-small": "RFDETRSmall",
+    "rf-detr-medium": "RFDETRMedium",
+    "rf-detr-base": "RFDETRBase",
+}
 
 DEFAULTS = {
     "layers": LAYERS,
     "fps": 1.0,
     "max_frames": 0,
-    "object_model": "PekingU/rtdetr_v2_r18vd",
+    "object_model": "rf-detr-small",
     "object_threshold": 0.5,
     "logo_model": "google/owlv2-base-patch16-ensemble",
     "logo_prompts": ("logo",),
@@ -77,7 +85,7 @@ def analyze(path: str, **opts) -> dict:
         media, frames = _ocr._read_media(path, fps, int(o["max_frames"] or 0), int(o["timeout"]))
 
     torch = _torch(int(o["cpu_threads"]))
-    objects = _detector(o["object_model"], "closed", o) if "objects" in layers else None
+    objects = _object_detector(o["object_model"], o) if "objects" in layers else None
     logos = _detector(o["logo_model"], "open", o) if "logos" in layers else None
     refs = _brand_refs(o) if logos and o["brand_refs_dir"] else None
     brands = _brand_names(o, refs)
@@ -113,6 +121,7 @@ def analyze(path: str, **opts) -> dict:
         "tool": TOOL,
         "tool_version": _version("transformers"),
         "torch_version": _version("torch"),
+        "rfdetr_version": _version("rfdetr") if objects and objects["kind"] == "rfdetr" else None,
         "model": "; ".join(f"{k}={v['id']}@{(v['revision'] or '')[:12]}" for k, v in models.items() if "id" in v),
         "models": models,
         **media,
@@ -208,6 +217,50 @@ def _load(kind: str, model_id: str, o: dict):
         return _MODELS[key]
 
 
+def _object_detector(model_id: str, o: dict) -> dict:
+    return _rfdetr(model_id, o) if model_id in RFDETR_MODELS else _detector(model_id, "closed", o)
+
+
+def _rfdetr(model_id: str, o: dict) -> dict:
+    """RF-DETR COCO checkpoint, cached per process. Weights download once into model_dir/rfdetr (else $RF_HOME)."""
+    key = ("rfdetr", model_id, o["model_dir"])
+    with _MODELS_LOCK:
+        if key not in _MODELS:
+            try:
+                import rfdetr
+                from rfdetr.assets.model_weights import ModelWeights
+            except ImportError as e:
+                raise EnricherServiceError(
+                    "rfdetr is not installed (pip install -r object_detection_enricher/requirements.txt)",
+                    reason="tool_missing",
+                ) from e
+            weights = f"{model_id}.pth"
+            if o["model_dir"]:
+                weights = os.path.join(o["model_dir"], "rfdetr", weights)
+                os.makedirs(os.path.dirname(weights), exist_ok=True)
+            try:
+                model = getattr(rfdetr, RFDETR_MODELS[model_id])(device="cpu", pretrain_weights=weights)
+            except MemoryError as e:
+                raise EnricherServiceError(f"out of memory loading {model_id}", reason="out_of_memory") from e
+            except (OSError, ValueError, KeyError, RuntimeError) as e:
+                # download failures (requests errors are OSError), MD5 mismatches and corrupt checkpoints
+                raise EnricherServiceError(
+                    f"model {model_id!r} unavailable: {_ocr._root_cause(e)}", reason="model_unavailable"
+                ) from e
+            md5 = ModelWeights.get_md5(f"{model_id}.pth")
+            _MODELS[key] = {
+                "kind": "rfdetr",
+                "model": model,
+                "info": {
+                    "id": model_id,
+                    "revision": f"md5:{md5}" if md5 else None,
+                    "architecture": "rf-detr",
+                    "license_note": "Apache-2.0 (rfdetr package and COCO checkpoint)",
+                },
+            }
+        return _MODELS[key]
+
+
 def _detector(model_id: str, kind: str, o: dict) -> dict:
     model, proc = _load(kind, model_id, o)
     info = {
@@ -235,6 +288,8 @@ def _infer(torch, fn, what: str):
 
 
 def _detect(torch, det: dict, img: Image.Image, prompts, threshold: float) -> list:
+    if det["kind"] == "rfdetr":
+        return _detect_rfdetr(torch, det, img, threshold)
     model, proc = det["model"], det["proc"]
     w, h = img.size
     arch = model.config.model_type
@@ -267,6 +322,21 @@ def _detect(torch, det: dict, img: Image.Image, prompts, threshold: float) -> li
         if b[2] > b[0] and b[3] > b[1]:
             found.append({"label": label, "score": round(float(score), 4), "box": b})
     return sorted(found, key=lambda d: -d["score"])
+
+
+def _detect_rfdetr(torch, det: dict, img: Image.Image, threshold: float) -> list:
+    model = det["model"]
+    w, h = img.size
+    d = _infer(torch, lambda: model.predict(img, threshold=threshold), "rf-detr detection")
+    names = d.data.get("class_name")
+    if names is None:
+        raise EnricherServiceError("rf-detr returned no class names", reason="detection_failed")
+    found = []
+    for box, label, score in zip(d.xyxy.tolist(), names, d.confidence.tolist()):
+        b = _norm_box(box, w, h)
+        if b[2] > b[0] and b[3] > b[1]:
+            found.append({"label": str(label), "score": round(float(score), 4), "box": b})
+    return sorted(found, key=lambda x: -x["score"])
 
 
 def _norm_box(box, w: int, h: int) -> list:
