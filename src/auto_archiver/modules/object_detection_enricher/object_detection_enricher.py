@@ -45,6 +45,7 @@ DEFAULTS = {
     "max_logos_per_frame": 10,
     "brands": (),
     "brand_refs_dir": os.environ.get("OD_BRAND_REFS_DIR") or None,
+    "brand_match": os.environ.get("OD_BRAND_MATCH", "1") != "0",
     "embed_model": "google/siglip2-base-patch16-224",
     "brand_match_threshold": 0.8,
     "logo_ocr": True,
@@ -62,7 +63,7 @@ _REFS = {}
 def analyze(path: str, **opts) -> dict:
     """Detect objects and logos in an image or a video file. Options (all optional): layers, fps, max_frames,
     object_model, object_threshold, logo_model, logo_prompts, logo_threshold, max_logos_per_frame, brands,
-    brand_refs_dir, embed_model, brand_match_threshold, logo_ocr, wordmarks, cpu_threads, model_dir, timeout,
+    brand_refs_dir, brand_match, embed_model, brand_match_threshold, logo_ocr, wordmarks, cpu_threads, model_dir, timeout,
     stills=[(timestamp, image_path), ...] to analyse given stills instead of sampling the video.
     Boxes are [x0, y0, x1, y1] normalised to 0..1 of the frame. Raises EnricherInputError / EnricherServiceError."""
     unknown = set(opts) - set(DEFAULTS) - {"stills"}
@@ -87,7 +88,7 @@ def analyze(path: str, **opts) -> dict:
     torch = _torch(int(o["cpu_threads"]))
     objects = _object_detector(o["object_model"], o) if "objects" in layers else None
     logos = _detector(o["logo_model"], "open", o) if "logos" in layers else None
-    refs = _brand_refs(o) if logos and o["brand_refs_dir"] else None
+    refs = _brand_refs(o) if logos and o["brand_match"] and o["brand_refs_dir"] else None
     brands = _brand_names(o, refs)
     ocr = _ocr._pipeline("latin", _ocr.DEFAULTS)[0] if logos and o["logo_ocr"] else None
 
