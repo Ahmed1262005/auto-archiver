@@ -154,6 +154,16 @@ def test_bad_options(fx, tmp_path):
 # ---------- model / runtime failures -> EnricherServiceError ----------
 
 
+def test_brand_match_off_skips_siglip(fx, tmp_path, mocker):
+    refs = mocker.patch.object(od, "_brand_refs")
+    analyze(fx["blank"], layers=["logos"], brand_refs_dir=str(tmp_path / "missing"), brand_match=False)
+    refs.assert_not_called()
+
+
+def test_brand_match_on_by_default():
+    assert od.DEFAULTS["brand_match"] is True
+
+
 def test_unknown_model_is_model_unavailable(fx):
     with pytest.raises(EnricherServiceError) as e:
         analyze(fx["blank"], layers=["objects"], object_model="sapien-ad-index/no-such-detector")

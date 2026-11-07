@@ -27,6 +27,11 @@
             "default": None,
             "help": "folder of reference logos, <brand>/<image>; logo crops are matched to them with SigLIP 2 (default $OD_BRAND_REFS_DIR)",
         },
+        "brand_match": {
+            "default": True,
+            "type": "bool",
+            "help": "match logo crops to brand_refs_dir with SigLIP 2; off skips the embedding model, e.g. in tests (default: on unless $OD_BRAND_MATCH=0)",
+        },
         "embed_model": {
             "default": "google/siglip2-base-patch16-224",
             "help": "image embedding model for brand matching",
