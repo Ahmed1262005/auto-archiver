@@ -23,16 +23,17 @@ BLOCKED = "blocked"  # YouTube's bot check or HTTP 429: back off
 COOKIES_INVALID = "cookies_invalid"  # the cookies file was rejected (signed out or rotated): export a fresh one
 FAILED = "failed"  # anything else, usually yt-dlp out of date with a YouTube change
 
-# 720p is enough for every enricher; H.264 first (YouTube's <=720p mp4 is often AV1, which OpenCV/ffmpeg builds
-# here can't decode), mp4/m4a so the merge is a remux, not a re-encode
+# 720p is enough for every enricher. H.264 + m4a first: the merge is a remux, and every decoder in the pipeline
+# (OpenCV, ffmpeg without dav1d, Encore) reads it; YouTube's other <=720p mp4 video streams are often AV1.
 FORMAT = (
-    "bv*[height<=720][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=720][ext=mp4]+ba[ext=m4a]/"
-    "b[height<=720][ext=mp4]/bv*[height<=720]+ba/b"
+    "bv*[height<=720][vcodec^=avc1]+ba[ext=m4a]/b[height<=720][vcodec^=avc1]"
+    "/bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720]/b"
 )
 
 REASONS = [
     (COOKIES_INVALID, r"cookies are no longer valid|cookies? (?:file )?(?:is |are )?(?:invalid|expired)"),
-    (BLOCKED, r"not a bot|HTTP Error 429|Too Many Requests"),
+    # googlevideo answers 403 when a stream URL's signature or PO token is rejected; a later attempt usually works
+    (BLOCKED, r"not a bot|HTTP Error 429|Too Many Requests|HTTP Error 403"),
     (TRANSIENT, r"HTTP Error 5\d\d|timed out|Connection|Temporary failure|IncompleteRead|Remote end closed"),
     (
         UNAVAILABLE,
