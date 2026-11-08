@@ -1,6 +1,6 @@
-"""ocr_enricher: real PaddleOCR runs on ffmpeg-generated fixtures and (when present) real stored TikTok ads.
+"""ocr_enricher: real RapidOCR runs on ffmpeg-generated fixtures and (when present) real stored TikTok ads.
 
-Skipped when paddleocr is not installed (pip install -r src/auto_archiver/modules/ocr_enricher/requirements.txt).
+Skipped when rapidocr is not installed (pip install -r src/auto_archiver/modules/ocr_enricher/requirements.txt).
 Real ads are read from $OCR_REAL_ADS_DIR (*.mp4, *.jpg); they are never committed.
 """
 
@@ -14,7 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-pytest.importorskip("paddleocr")
+pytest.importorskip("rapidocr")
 if not shutil.which("ffmpeg"):
     pytest.skip("ffmpeg not installed", allow_module_level=True)
 
@@ -202,11 +202,16 @@ def texts(result):
     return [e["text"] for e in result["timeline"]]
 
 
+def plain(values):
+    """Typographic apostrophes folded, so either reading of TEXTS["fr"] matches."""
+    return [v.replace("’", "'") for v in values]
+
+
 def assert_contract(r):
     json.dumps(r)
     for k in ("tool", "tool_version", "model", "frames", "timeline", "full_text", "has_text", "scripts"):
         assert k in r
-    assert r["tool"] == "paddleocr" and r["tool_version"] and r["model"]
+    assert r["tool"] == "rapidocr" and r["tool_version"] and r["model"]
     for e in r["timeline"]:
         assert e["first_seen"] <= e["last_seen"] and 0 < e["max_confidence"] <= 1 and len(e["box"]) == 4
 
@@ -219,7 +224,7 @@ def test_latin_texts_recognised(fx, key):
     r = analyze(fx[f"{key}_png"])
     assert_contract(r)
     assert r["media_type"] == "image" and r["has_text"]
-    assert texts(r) == [TEXTS[key].replace("’", "'")]
+    assert plain(texts(r)) == plain([TEXTS[key]])
     assert r["script"] == "Latin"
 
 
@@ -227,7 +232,7 @@ def test_arabic_rtl_in_logical_order(fx):
     r = analyze(fx["ar_png"], languages=["latin", "arabic"])
     assert texts(r) == [TEXTS["ar"]]
     assert r["script"] == "Arabic" and r["languages_detected"] == ["arabic"]
-    assert "+arabic_PP-OCRv5_mobile_rec" in r["model"]
+    assert "+arabic_PP-OCRv5_rec_mobile" in r["model"]
 
 
 def test_arabic_not_read_by_latin_only(fx):
@@ -280,7 +285,7 @@ def test_rotated_video_is_read_upright(fx):
 
 def test_half_second_clip_gets_one_frame(fx):
     r = analyze(fx["half_second"])
-    assert r["frame_count"] == 1 and texts(r) == [TEXTS["fr"].replace("’", "'")]
+    assert r["frame_count"] == 1 and plain(texts(r)) == plain([TEXTS["fr"]])
 
 
 def test_long_clip_timestamps(fx):
@@ -381,8 +386,9 @@ def test_ffprobe_malformed_json(fx, mocker):
     "exc, reason", [(RuntimeError("Segmentation fault in predictor"), "ocr_failed"), (MemoryError(), "out_of_memory")]
 )
 def test_predict_crash(fx, mocker, exc, reason):
-    ocr, _models = ocr_enricher._pipeline("latin", ocr_enricher.DEFAULTS)
-    mocker.patch.object(ocr, "predict", side_effect=exc)
+    ocr, models = ocr_enricher._pipeline("latin", ocr_enricher.DEFAULTS)
+    key = next(k for k, v in ocr_enricher._PIPELINES.items() if v[0] is ocr)
+    mocker.patch.dict(ocr_enricher._PIPELINES, {key: (mocker.Mock(side_effect=exc), models)})
     with pytest.raises(EnricherServiceError) as e:
         analyze(fx["en_png"])
     assert e.value.reason == reason
@@ -414,21 +420,24 @@ class _StubHoster(BaseHTTPRequestHandler):
 
 @pytest.fixture
 def stub_model_hoster(tmp_path, mocker):
-    """Real PaddleX download path against a local HTTP stub, with an empty model cache."""
+    """Real RapidOCR download path against a local HTTP stub, with an empty model cache."""
     import requests
-    from paddlex.inference.utils import official_models as om
+    from rapidocr.utils import download_file
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), _StubHoster)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    mocker.patch.object(om.official_models, "_save_dir", tmp_path)
-    mocker.patch.object(om.official_models, "_hosters", [om._BosModelHoster(tmp_path)])
-    real_get = requests.get
-    mocker.patch("paddlex.utils.download.requests.get", side_effect=lambda *a, **k: real_get(*a, **{**k, "timeout": 1}))
     mocker.patch.dict(ocr_enricher._PIPELINES, clear=True)
+    real_get = requests.get
 
     def point_at(mode, port=None):
         _StubHoster.mode = mode
-        mocker.patch.object(om._BosModelHoster, "base_url", f"http://127.0.0.1:{port or server.server_port}/models")
+        base = f"http://127.0.0.1:{port or server.server_port}/models/"
+        mocker.patch.object(
+            download_file.requests,
+            "get",
+            side_effect=lambda url, **k: real_get(base + url.rsplit("/", 1)[-1], **{**k, "timeout": 1}),
+        )
+        return str(tmp_path / "models")
 
     yield point_at
     server.shutdown()
@@ -443,17 +452,17 @@ def test_model_download_failures(fx, stub_model_hoster, mode):
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
         s.close()
-        stub_model_hoster(mode, port)
+        model_dir = stub_model_hoster(mode, port)
     else:
-        stub_model_hoster(mode)
+        model_dir = stub_model_hoster(mode)
     with pytest.raises(EnricherServiceError) as e:
-        analyze(fx["en_png"], languages=["korean"])
+        analyze(fx["en_png"], languages=["korean"], model_dir=model_dir)
     assert e.value.reason == "model_unavailable"
 
 
-def test_paddleocr_not_installed(fx, mocker):
+def test_rapidocr_not_installed(fx, mocker):
     mocker.patch.dict(ocr_enricher._PIPELINES, clear=True)
-    mocker.patch.dict("sys.modules", {"paddleocr": None})
+    mocker.patch.dict("sys.modules", {"rapidocr": None})
     with pytest.raises(EnricherServiceError) as e:
         analyze(fx["en_png"])
     assert e.value.reason == "tool_missing"

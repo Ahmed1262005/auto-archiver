@@ -10,6 +10,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
+pytest.importorskip("faster_whisper", reason="faster-whisper extra not installed")
+
 from auto_archiver.core import Media, Metadata
 from auto_archiver.modules.faster_whisper_enricher import faster_whisper_enricher as fwe
 from auto_archiver.modules.faster_whisper_enricher import analyze

@@ -3,13 +3,13 @@
     "type": ["enricher"],
     "requires_setup": False,
     "dependencies": {
-        "python": ["loguru", "PIL", "numpy", "paddleocr", "paddle"],
+        "python": ["loguru", "PIL", "numpy", "rapidocr", "onnxruntime"],
         "bin": ["ffmpeg", "ffprobe"],
     },
     "configs": {
         "languages": {
             "default": ["latin"],
-            "help": "recognisers to run: any of latin, arabic, chinese, japanese, korean (or a raw PaddleOCR lang code such as 'fr' or 'ar'). Each extra language runs one more PaddleOCR pipeline per frame.",
+            "help": "recognisers to run: any of latin, arabic, chinese, japanese, korean (or a raw RapidOCR lang code such as 'cyrillic' or 'th'). Latin, Chinese and Japanese share one PP-OCRv6 model; each other language runs one more pipeline per frame.",
         },
         "fps": {"default": 1.0, "type": "float", "help": "frames sampled per second of video"},
         "min_confidence": {
@@ -18,8 +18,15 @@
             "help": "drop recognised lines below this score (0..1)",
         },
         "max_frames": {"default": 0, "type": "int", "help": "stop sampling after this many frames, 0 means no limit"},
-        "device": {"default": "cpu", "help": "PaddlePaddle device, e.g. cpu or gpu:0"},
-        "cpu_threads": {"default": 0, "type": "int", "help": "CPU threads per pipeline, 0 keeps the PaddleOCR default"},
+        "model_type": {
+            "default": "small",
+            "help": "PP-OCRv6 model size: tiny, small or medium (PP-OCRv5 languages use mobile)",
+        },
+        "cpu_threads": {"default": 0, "type": "int", "help": "ONNX Runtime threads per pipeline, 0 keeps the default"},
+        "model_dir": {
+            "default": None,
+            "help": "model cache directory (default $OCR_MODEL_DIR, else inside the rapidocr package)",
+        },
         "ocr_version": {
             "default": None,
             "help": "force a PP-OCR version (PP-OCRv5, PP-OCRv6); default picks per language",
@@ -28,7 +35,7 @@
     },
     "description": """
     Reads on-screen text (captions, supers, prices, URLs, end cards) from images and video frames with
-    [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) (Apache-2.0) and its PP-OCR multilingual models.
+    [RapidOCR](https://github.com/RapidAI/RapidOCR) (Apache-2.0), which runs PaddleOCR's PP-OCR models on ONNX Runtime.
 
     ### Features
     - Videos are sampled with ffmpeg at `fps` (default 1 frame/s); images are read directly.
@@ -42,9 +49,9 @@
 
     ### Setup
     - Runs in-process on CPU; no model server is needed.
-    - `pip install -r src/auto_archiver/modules/ocr_enricher/requirements.txt` (pinned paddleocr + paddlepaddle CPU).
-    - Models download on first use (HuggingFace, then other PaddleX hosters) into `~/.paddlex/official_models`
-      (`PADDLE_PDX_CACHE_HOME` moves it). Bake them into the image for offline workers.
+    - `pip install -r src/auto_archiver/modules/ocr_enricher/requirements.txt` (pinned rapidocr + onnxruntime CPU).
+    - Models (ONNX) download on first use into `model_dir` / `$OCR_MODEL_DIR`, else the rapidocr package's
+      `models/` folder. Bake them into the image for offline workers.
     - Requires `ffmpeg` and `ffprobe` on the PATH.
     """,
 }
