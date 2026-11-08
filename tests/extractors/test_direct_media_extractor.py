@@ -11,10 +11,13 @@ SIGNED_URL = "https://cdn.example.com/v/abc.mp4?" + "x-signature=" + "a" * 500
 
 
 class FakeResponse:
-    def __init__(self, content_type="video/mp4", body=b"data", status=200):
+    def __init__(self, content_type="video/mp4", body=b"data", status=200, length=None, broken=False):
         self.headers = {"Content-Type": content_type}
+        if length is not None:
+            self.headers["Content-Length"] = str(length)
         self.body = body
-        self.status = status
+        self.status = self.status_code = status
+        self.broken = broken
         self.closed = False
 
     def raise_for_status(self):
@@ -23,6 +26,8 @@ class FakeResponse:
 
     def iter_content(self, _size):
         yield self.body
+        if self.broken:
+            raise requests.exceptions.ChunkedEncodingError("Connection broken: IncompleteRead")
 
     def close(self):
         self.closed = True
@@ -81,3 +86,59 @@ class TestDirectMediaExtractor(TestExtractorBase):
         item.set("media_urls", ["https://cdn/a.mp4", "https://cdn/b.mp4"])
         result = self.extractor.download(item)
         assert len(result.media) == 1
+        assert [(f["url"], f["reason"], f["status"]) for f in result.get("media_failures")] == [
+            ("https://cdn/a.mp4", "expired", 403)
+        ]
+
+    def test_explicit_empty_media_urls_is_metadata_only(self, mocker):
+        get = self.patch_get(mocker, FakeResponse())
+        item = Metadata().set_url("https://www.linkedin.com/ad-library/detail/1").set("media_urls", [])
+        result = self.extractor.download(item)
+        assert result.is_success()
+        assert result.status == "metadata_only: success"
+        assert not result.media
+        get.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "response,reason",
+        [
+            (FakeResponse(status=403), "expired"),
+            (FakeResponse(status=410), "expired"),
+            (FakeResponse(status=404), "not_found"),
+            (FakeResponse(status=429), "transient"),
+            (FakeResponse(status=503), "transient"),
+            (FakeResponse(status=400), "http_error"),
+            (FakeResponse(content_type="text/html"), "not_media"),
+            (FakeResponse(content_type="application/json", body=b'{"error":"expired"}'), "not_media"),
+            (FakeResponse(content_type=""), "not_media"),
+            (FakeResponse(body=b""), "empty"),
+            (FakeResponse(body=b"da", length=4), "partial"),
+            (FakeResponse(broken=True), "partial"),
+            (FakeResponse(body=b"x" * 11), "too_large"),
+            (FakeResponse(length=11), "too_large"),
+        ],
+    )
+    def test_fetch_failure_reasons(self, mocker, response, reason, tmp_path):
+        from auto_archiver.modules.direct_media_extractor.direct_media_extractor import MediaFetchError
+
+        self.extractor.max_bytes = 10
+        self.patch_get(mocker, response)
+        with pytest.raises(MediaFetchError) as e:
+            self.extractor.fetch(SIGNED_URL)
+        assert e.value.reason == reason
+        assert e.value.retryable == (reason in ("transient", "partial"))
+        assert response.closed
+        assert list(tmp_path.iterdir()) == []  # no half-written file is left behind
+
+    @pytest.mark.parametrize("exc", [requests.ConnectionError("reset"), requests.Timeout("slow")])
+    def test_network_errors_are_transient(self, mocker, exc):
+        from auto_archiver.modules.direct_media_extractor.direct_media_extractor import MediaFetchError
+
+        mocker.patch("requests.get", side_effect=exc)
+        with pytest.raises(MediaFetchError) as e:
+            self.extractor.fetch(SIGNED_URL)
+        assert e.value.reason == "transient"
+
+    def test_matching_content_length_succeeds(self, mocker):
+        self.patch_get(mocker, FakeResponse(length=4))
+        assert os.path.getsize(self.extractor.fetch(SIGNED_URL).filename) == 4
