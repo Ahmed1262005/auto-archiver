@@ -70,7 +70,10 @@ def fx(tmp_path_factory):
     )  # fmt: skip
     files["vfr"] = p("vfr.mp4")
     concat(p("land.mp4"), [("testsrc", 3), ("smptebars", 3)], size="320x180")
-    ff("-i", p("land.mp4"), "-c", "copy", "-metadata:s:v:0", "rotate=90", p("rotated.mp4"))
+    try:  # ffmpeg 6+ ignores the old `rotate` tag on output; both forms give a display matrix of 90
+        ff("-display_rotation", "90", "-i", p("land.mp4"), "-c", "copy", p("rotated.mp4"))
+    except subprocess.CalledProcessError:
+        ff("-i", p("land.mp4"), "-c", "copy", "-metadata:s:v:0", "rotate=90", p("rotated.mp4"))
     files["rotated"] = p("rotated.mp4")
     files["portrait"] = concat(p("portrait.mp4"), [("testsrc", 2), ("smptebars", 2)], size="180x320")
     files["short"] = concat(p("short.mp4"), [("testsrc", 0.5)])
