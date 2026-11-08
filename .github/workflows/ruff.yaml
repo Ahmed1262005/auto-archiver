@@ -9,7 +9,6 @@ on:
       - "poetry.lock"
       - "scripts/settings"
   pull_request:
-    branches: [ main ]
     paths-ignore:
       - "README.md"
       - ".github"

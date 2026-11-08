@@ -34,6 +34,8 @@ dependencies = [
     "google-auth-oauthlib (>=0.0.0)",
     "oauth2client (>=0.0.0)",
     "pdqhash (>=0.0.0)",
+    "scenedetect (==0.7.1)",
+    "opencv-python (==4.13.0.92)",
     "pillow (>=0.0.0)",
     "python-slugify (>=0.0.0)",
     "dateparser (>=0.0.0)",
@@ -60,6 +62,12 @@ dependencies = [
     "seleniumbase (>=4.36.4,<5.0.0)",
     "pyautogui (>=0.9.54,<0.10.0)",
     "pyperclip (>=1.9.0)", 
+]
+
+[project.optional-dependencies]
+transcription = [
+    "faster-whisper (==1.2.1)",
+    "av (>=11,<16)",
 ]
 
 [tool.poetry.group.dev.dependencies]

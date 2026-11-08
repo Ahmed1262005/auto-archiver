@@ -7,12 +7,89 @@ import requests
 from auto_archiver.core import Feeder, Metadata
 from auto_archiver.core.consts import SetupError
 from auto_archiver.utils.custom_logger import logger
+from auto_archiver.utils.provider_errors import ProviderError
 
 AD_LIBRARY_URL = "https://api.linkedin.com/rest/adLibrary"
+
+# Every field the 202610 adLibrary schema returns, checked against live responses and `fields=` projections
+# (2026-11): there is no creative content, media URN or preview link. None marks a field whose value isn't walked.
+KNOWN_FIELDS = {
+    "adUrl": None,
+    "isRestricted": None,
+    "restrictionDetails": None,
+    "details": {
+        "type": None,
+        "advertiser": {"advertiserName": None, "advertiserUrl": None, "adPayer": None},
+        "adStatistics": {
+            "firstImpressionAt": None,
+            "latestImpressionAt": None,
+            "totalImpressions": None,
+            "impressionsDistributionByCountry": None,
+        },
+        "adTargeting": None,
+    },
+}
 
 
 def restli_date(d: date) -> str:
     return f"(year:{d.year},month:{d.month},day:{d.day})"
+
+
+def effective_window(start: date, end: date) -> tuple[date, date]:
+    """The live API (2026-11) returns zero ads for one-day ranges, so a range is widened to at least two days."""
+    return min(start, end - timedelta(days=1)), end
+
+
+def request_url(advertiser: str, start: date, end: date, offset: int, count: int) -> str:
+    # dateRange is Rest.li syntax and must not be percent-encoded, so the query string is built by hand
+    start, end = effective_window(start, end)
+    return (
+        f"{AD_LIBRARY_URL}?q=criteria&advertiser={quote(advertiser)}"
+        f"&dateRange=(start:{restli_date(start)},end:{restli_date(end)})&start={offset}&count={count}"
+    )
+
+
+def parse_page(payload, status: int = 200, offset: int = 0) -> tuple[list, int | None, int]:
+    """(elements, next offset or None, paging.total) for one adLibrary response."""
+    if status != 200:
+        body = payload if isinstance(payload, dict) else {}
+        raise ProviderError(
+            f"LinkedIn ad library query failed: HTTP {status} {body.get('code')} {body.get('message')}",
+            status=status,
+            code=body.get("code") or (str(body["serviceErrorCode"]) if "serviceErrorCode" in body else None),
+        )
+    if not isinstance(payload, dict) or not isinstance(payload.get("elements"), list):
+        raise ProviderError("LinkedIn ad library: elements missing or not a list", status=status, schema=True)
+    paging = payload.get("paging")
+    if not isinstance(paging, dict) or not isinstance(paging.get("total"), int):
+        raise ProviderError("LinkedIn ad library: paging.total missing", status=status, schema=True)
+    elements = payload["elements"]
+    nxt = offset + len(elements)
+    return elements, (nxt if elements and nxt < paging["total"] else None), paging["total"]
+
+
+def unmapped_fields(record, known: dict = KNOWN_FIELDS, prefix: str = "") -> list[str]:
+    """Dotted paths of fields outside KNOWN_FIELDS. A creative or content field added by LinkedIn shows up here."""
+    if not isinstance(record, dict):
+        return []
+    out = []
+    for k, v in record.items():
+        if k not in known:
+            out.append(f"{prefix}{k}")
+        elif isinstance(known[k], dict):
+            out += unmapped_fields(v, known[k], f"{prefix}{k}.")
+    return sorted(out)
+
+
+def impressions_range(stats: dict) -> dict | None:
+    """totalImpressions as {lower, upper}; the top band comes back as {from: 1000000, to: 0}, meaning 1M+."""
+    total = stats.get("totalImpressions")
+    if not isinstance(total, dict):
+        return None
+    lower, upper = total.get("from"), total.get("to")
+    if upper == 0 and (lower or 0) > 0:
+        upper = None
+    return {"lower": lower, "upper": upper}
 
 
 class LinkedInAdLibFeeder(Feeder):
@@ -22,14 +99,9 @@ class LinkedInAdLibFeeder(Feeder):
         if not self.access_token:
             raise SetupError("linkedin_adlib_feeder needs an access_token")
 
-    def _get(self, advertiser: str, start: date, end: date, offset: int) -> dict:
-        # dateRange is Rest.li syntax and must not be percent-encoded, so the query string is built by hand
-        url = (
-            f"{AD_LIBRARY_URL}?q=criteria&advertiser={quote(advertiser)}"
-            f"&dateRange=(start:{restli_date(start)},end:{restli_date(end)})&start={offset}&count={self.count}"
-        )
+    def _get(self, advertiser: str, start: date, end: date, offset: int) -> tuple[list, int | None, int]:
         r = requests.get(
-            url,
+            request_url(advertiser, start, end, offset, self.count),
             headers={
                 "Authorization": f"Bearer {self.access_token}",
                 "LinkedIn-Version": str(self.linkedin_version),
@@ -37,20 +109,22 @@ class LinkedInAdLibFeeder(Feeder):
             },
             timeout=self.timeout,
         )
-        if r.status_code != 200:
-            raise RuntimeError(f"LinkedIn ad library query failed: HTTP {r.status_code} {r.text[:200]}")
-        return r.json()
+        try:
+            payload = r.json()
+        except ValueError:
+            raise ProviderError(
+                f"LinkedIn ad library query: HTTP {r.status_code} body is not JSON", status=r.status_code
+            )
+        return parse_page(payload, r.status_code, offset)
 
     def _ads(self, advertiser: str, start: date, end: date):
         offset = 0
         for page in range(self.max_pages):
             if page:
                 time.sleep(self.pause_seconds)
-            data = self._get(advertiser, start, end, offset)
-            elements = data.get("elements") or []
+            elements, offset, _total = self._get(advertiser, start, end, offset)
             yield from elements
-            offset += len(elements)
-            if not elements or offset >= (data.get("paging") or {}).get("total", 0):
+            if offset is None:
                 return
         logger.warning(f"linkedin_adlib_feeder hit max_pages for advertiser {advertiser}")
 
@@ -70,7 +144,13 @@ class LinkedInAdLibFeeder(Feeder):
         m.set("ad_type", details.get("type"))
         m.set("first_shown", stats.get("firstImpressionAt"))
         m.set("last_shown", stats.get("latestImpressionAt"))
+        m.set("impressions", impressions_range(stats))
         m.set("media_urls", [])
+        m.set("creative_status", "not_provided_by_api")
+        unmapped = unmapped_fields(record)
+        m.set("unmapped_fields", unmapped)
+        if unmapped:
+            logger.warning(f"linkedin_adlib_feeder: ad {m.get('source_ad_id')} has fields new to us: {unmapped}")
         m.set("raw", record)
         m.set_title(f"{advertiser.get('advertiserName')} LinkedIn ad {m.get('source_ad_id')}")
         return m
