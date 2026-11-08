@@ -11,6 +11,25 @@ from auto_archiver.utils.provider_errors import ProviderError
 
 AD_LIBRARY_URL = "https://api.linkedin.com/rest/adLibrary"
 
+# Every field the 202610 adLibrary schema returns, checked against live responses and `fields=` projections
+# (2026-11): there is no creative content, media URN or preview link. None marks a field whose value isn't walked.
+KNOWN_FIELDS = {
+    "adUrl": None,
+    "isRestricted": None,
+    "restrictionDetails": None,
+    "details": {
+        "type": None,
+        "advertiser": {"advertiserName": None, "advertiserUrl": None, "adPayer": None},
+        "adStatistics": {
+            "firstImpressionAt": None,
+            "latestImpressionAt": None,
+            "totalImpressions": None,
+            "impressionsDistributionByCountry": None,
+        },
+        "adTargeting": None,
+    },
+}
+
 
 def restli_date(d: date) -> str:
     return f"(year:{d.year},month:{d.month},day:{d.day})"
@@ -47,6 +66,19 @@ def parse_page(payload, status: int = 200, offset: int = 0) -> tuple[list, int |
     elements = payload["elements"]
     nxt = offset + len(elements)
     return elements, (nxt if elements and nxt < paging["total"] else None), paging["total"]
+
+
+def unmapped_fields(record, known: dict = KNOWN_FIELDS, prefix: str = "") -> list[str]:
+    """Dotted paths of fields outside KNOWN_FIELDS. A creative or content field added by LinkedIn shows up here."""
+    if not isinstance(record, dict):
+        return []
+    out = []
+    for k, v in record.items():
+        if k not in known:
+            out.append(f"{prefix}{k}")
+        elif isinstance(known[k], dict):
+            out += unmapped_fields(v, known[k], f"{prefix}{k}.")
+    return sorted(out)
 
 
 def impressions_range(stats: dict) -> dict | None:
@@ -114,6 +146,11 @@ class LinkedInAdLibFeeder(Feeder):
         m.set("last_shown", stats.get("latestImpressionAt"))
         m.set("impressions", impressions_range(stats))
         m.set("media_urls", [])
+        m.set("creative_status", "not_provided_by_api")
+        unmapped = unmapped_fields(record)
+        m.set("unmapped_fields", unmapped)
+        if unmapped:
+            logger.warning(f"linkedin_adlib_feeder: ad {m.get('source_ad_id')} has fields new to us: {unmapped}")
         m.set("raw", record)
         m.set_title(f"{advertiser.get('advertiserName')} LinkedIn ad {m.get('source_ad_id')}")
         return m

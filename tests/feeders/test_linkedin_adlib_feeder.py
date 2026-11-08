@@ -64,6 +64,8 @@ def test_item_fields(feeder, mocker):
     assert item.get("advertiser_query") == "PepsiCo"
     assert item.get("ad_payer") == "Omne Agency"
     assert item.get("media_urls") == []
+    assert item.get("creative_status") == "not_provided_by_api"
+    assert item.get("unmapped_fields") == []
     assert item.get("raw") == ad(1624254)
 
 
@@ -154,3 +156,32 @@ def test_parse_page_offsets():
     assert parse_page({"elements": [ad(3)], "paging": {"total": 3}}, 200, 2)[1:] == (None, 3)
     # an empty page stops even when the reported total says otherwise (no infinite loop)
     assert parse_page({"elements": [], "paging": {"total": 9}}, 200, 4)[1:] == (None, 9)
+
+
+def test_full_record_has_no_unmapped_fields():
+    rec = ad(1)
+    rec["restrictionDetails"] = {"reason": "x"}
+    rec["details"]["adStatistics"]["totalImpressions"] = {"from": 1000, "to": 5000}
+    rec["details"]["adStatistics"]["impressionsDistributionByCountry"] = [{"country": "urn:li:country:us"}]
+    rec["details"]["adTargeting"] = [{"facetName": "Location", "includedSegments": ["United States"]}]
+    from auto_archiver.modules.linkedin_adlib_feeder.linkedin_adlib_feeder import unmapped_fields
+
+    assert unmapped_fields(rec) == []
+
+
+def test_new_fields_are_reported(feeder, mocker):
+    rec = ad(7)
+    rec["content"] = {"media": "urn:li:image:C4E10AQ"}
+    rec["details"]["commentary"] = "Hello"
+    rec["details"]["advertiser"]["logo"] = "urn:li:image:x"
+    mocker.patch("requests.get", return_value=page([rec], 1))
+    (item,) = list(feeder)
+    assert item.get("unmapped_fields") == ["content", "details.advertiser.logo", "details.commentary"]
+    assert item.get("media_urls") == []
+
+
+def test_unmapped_fields_tolerates_non_dict_values():
+    from auto_archiver.modules.linkedin_adlib_feeder.linkedin_adlib_feeder import unmapped_fields
+
+    assert unmapped_fields(None) == []
+    assert unmapped_fields({"details": None, "adUrl": "u"}) == []
