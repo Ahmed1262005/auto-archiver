@@ -11,8 +11,9 @@
         "fps": {"default": 1.0, "type": "float", "help": "frames sampled per second of video"},
         "max_frames": {"default": 0, "type": "int", "help": "stop sampling after this many frames, 0 means no limit"},
         "object_model": {
-            "default": "PekingU/rtdetr_v2_r18vd",
-            "help": "Hugging Face id of a closed-set detector (AutoModelForObjectDetection: RT-DETR(v2), D-FINE, DETR ...)",
+            "default": "rf-detr-small",
+            "help": "closed-set COCO detector: rf-detr-nano|small|medium|base (rfdetr package) or a Hugging Face id "
+            "of an AutoModelForObjectDetection checkpoint (e.g. PekingU/rtdetr_v2_r18vd, D-FINE, DETR)",
         },
         "object_threshold": {"default": 0.5, "type": "float", "help": "drop object boxes below this score (0..1)"},
         "logo_model": {
@@ -48,10 +49,11 @@
         "timeout": {"default": 600, "type": "int", "help": "seconds allowed for ffprobe/ffmpeg frame extraction"},
     },
     "description": """
-    Finds objects and logos in images and video frames for highlighting, on CPU, with Hugging Face transformers.
+    Finds objects and logos in images and video frames for highlighting, on CPU (RF-DETR, Hugging Face transformers).
 
     ### Features
-    - Objects: a closed-set COCO detector, RT-DETRv2-R18 by default (Apache-2.0).
+    - Objects: a closed-set COCO detector, RF-DETR-S by default (`rfdetr`, Apache-2.0); RT-DETRv2 or any other
+      transformers detector via `object_model` (e.g. `PekingU/rtdetr_v2_r18vd`).
     - Logos: an open-vocabulary detector prompted with "logo", OWLv2 base by default (Apache-2.0).
     - Brand per logo box: the text inside the box (RapidOCR, as in ocr_enricher) fuzzy-matched to `brands`
       and the reference-logo folder names, else the nearest SigLIP 2 embedding of a reference logo above
@@ -60,7 +62,8 @@
       logos of the same frame line up.
     - Per frame: `timestamp`, `objects` and `logos`, each `{label, score, box}` with box = [x0, y0, x1, y1]
       normalised 0..1; logos also have `brand`, `brand_score`, `brand_source` (ocr | siglip2) and `text`.
-    - `models` records each model id, Hub revision and architecture; `tool_version`/`torch_version` the runtime.
+    - `models` records each model id, revision (Hub commit or RF-DETR checkpoint MD5) and architecture;
+      `tool_version`/`torch_version`/`rfdetr_version` the runtime.
     - Failures are typed: `EnricherInputError` (bad media, don't retry) and `EnricherServiceError` with reason
       `model_unavailable`, `tool_missing`, `out_of_memory`, `detection_failed`, `ffmpeg_*`. A frame with nothing
       detected is not an error.
