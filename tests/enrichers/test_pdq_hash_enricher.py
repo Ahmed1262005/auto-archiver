@@ -29,6 +29,7 @@ def test_successful_enrich(metadata_with_images, mocker):
     # Ensure the hash is set for image media
     for media in metadata_with_images.media:
         assert media.get("pdq_hash") is not None
+        assert media.get("pdq_quality") == 100
 
 
 def test_enrich_skip_non_image(metadata_with_images, mocker):
@@ -73,3 +74,24 @@ def test_enrich_excludes_by_filetype(media_id, should_have_hash, mocker):
 
     media_item = metadata.media[0]
     assert (media_item.get("pdq_hash") is not None) == should_have_hash
+
+
+def test_calculate_pdq_on_real_images(tmp_path):
+    from PIL import Image, ImageDraw
+
+    def draw(path, size):
+        img = Image.new("RGB", (256, 256), (240, 240, 240))
+        d = ImageDraw.Draw(img)
+        d.rectangle((30, 40, 140, 200), fill=(200, 20, 20))
+        d.ellipse((120, 60, 230, 170), fill=(20, 60, 200))
+        img.resize(size).save(path, "JPEG", quality=60)
+
+    draw(tmp_path / "a.jpg", (256, 256))
+    draw(tmp_path / "b.jpg", (180, 180))  # resized and recompressed copy
+    Image.new("RGB", (64, 64), (0, 0, 0)).save(tmp_path / "black.jpg")
+    e = PdqHashEnricher()
+    (ha, qa), (hb, _), (_, qblack) = (e.calculate_pdq(str(tmp_path / n)) for n in ("a.jpg", "b.jpg", "black.jpg"))
+    assert bin(int(ha, 16) ^ int(hb, 16)).count("1") <= 31
+    assert qa >= 50 and qblack < 50
+    (tmp_path / "broken.jpg").write_bytes(b"not an image")
+    assert e.calculate_pdq(str(tmp_path / "broken.jpg")) == ("", None)

@@ -6,11 +6,88 @@ import requests
 from auto_archiver.core import Feeder, Metadata
 from auto_archiver.core.consts import SetupError
 from auto_archiver.utils.custom_logger import logger
+from auto_archiver.utils.provider_errors import ProviderError
 
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 AD_QUERY_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/query/"
-AD_FIELDS = "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.videos,ad.image_urls,advertiser.business_id,advertiser.business_name"
+AD_FIELDS = (
+    "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.videos,ad.image_urls,ad.reach,"
+    "advertiser.business_id,advertiser.business_name,advertiser.paid_for_by"
+)
 AD_PAGE_URL = "https://library.tiktok.com/ads/detail/?ad_id={}"
+AD_DETAIL_URL = "https://open.tiktokapis.com/v2/research/adlib/ad/detail/"
+# ad/query returns only the overall reach band; ad/detail adds reach by country, age and gender, and targeting
+AD_DETAIL_FIELDS = (
+    "ad.id,ad.first_shown_date,ad.last_shown_date,ad.status,ad.status_statement,ad.reach,"
+    "ad_group.targeting_info,advertiser.business_id,advertiser.business_name,advertiser.paid_for_by"
+)
+
+
+def query_body(business_id: int, start: date, end: date, country_code: str, max_count: int, search_id=None) -> dict:
+    """Request body for one page. The next page is addressed by the previous page's search_id alone:
+    the live API (2026-11) returns no cursor, and sending one as well returns a different result set."""
+    body = {
+        "filters": {
+            "advertiser_business_ids": [int(business_id)],
+            "ad_published_date_range": {"min": start.strftime("%Y%m%d"), "max": end.strftime("%Y%m%d")},
+            "country_code": country_code,
+        },
+        "max_count": max_count,
+    }
+    if search_id:
+        body["search_id"] = search_id
+    return body
+
+
+def parse_page(payload, status: int = 200) -> tuple[list, str | None]:
+    """(ads, next search_id or None) from one ad/query response; raises ProviderError on error envelopes."""
+    if not isinstance(payload, dict):
+        raise ProviderError("TikTok ad query: response is not a JSON object", status=status, schema=True)
+    error = payload.get("error") or {}
+    if not isinstance(error, dict):
+        error = {"code": str(error), "message": payload.get("error_description")}
+    if status != 200 or error.get("code") not in (None, "ok"):
+        raise ProviderError(
+            f"TikTok ad query failed: HTTP {status} {error.get('code')} {error.get('message')}",
+            status=status,
+            code=error.get("code"),
+        )
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("ads", []), list):
+        raise ProviderError("TikTok ad query: data.ads missing or not a list", status=status, schema=True)
+    if not data.get("has_more"):
+        return data.get("ads") or [], None
+    if not data.get("search_id"):
+        raise ProviderError("TikTok ad query: has_more without search_id", status=status, schema=True)
+    return data.get("ads") or [], data["search_id"]
+
+
+def detail_body(ad_id) -> dict:
+    return {"ad_id": int(ad_id)}
+
+
+def parse_detail(payload, status: int = 200) -> dict:
+    """`data` of one ad/detail response ({"ad", "ad_group", "advertiser"}); raises ProviderError on error envelopes."""
+    if not isinstance(payload, dict):
+        raise ProviderError("TikTok ad detail: response is not a JSON object", status=status, schema=True)
+    error = payload.get("error") or {}
+    if not isinstance(error, dict):
+        error = {"code": str(error), "message": payload.get("error_description")}
+    if status != 200 or error.get("code") not in (None, "ok"):
+        raise ProviderError(
+            f"TikTok ad detail failed: HTTP {status} {error.get('code')} {error.get('message')}",
+            status=status,
+            code=error.get("code"),
+        )
+    data = payload.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("ad"), dict) or "id" not in data["ad"]:
+        raise ProviderError("TikTok ad detail: data.ad missing or has no id", status=status, schema=True)
+    for key in ("reach",):
+        if data["ad"].get(key) is not None and not isinstance(data["ad"][key], dict):
+            raise ProviderError(f"TikTok ad detail: ad.{key} is not an object", status=status, schema=True)
+    if data.get("ad_group") is not None and not isinstance(data["ad_group"], dict):
+        raise ProviderError("TikTok ad detail: ad_group is not an object", status=status, schema=True)
+    return data
 
 
 class TikTokAdLibFeeder(Feeder):
@@ -35,7 +112,7 @@ class TikTokAdLibFeeder(Feeder):
             self.access_token = r.json()["access_token"]
         return self.access_token
 
-    def _query(self, body: dict) -> dict:
+    def _query(self, body: dict) -> tuple[list, str | None]:
         r = requests.post(
             AD_QUERY_URL,
             params={"fields": AD_FIELDS},
@@ -43,32 +120,20 @@ class TikTokAdLibFeeder(Feeder):
             headers={"Authorization": f"Bearer {self._token()}"},
             timeout=self.timeout,
         )
-        payload = r.json() if r.content else {}
-        error = payload.get("error") or {}
-        if r.status_code != 200 or error.get("code") not in (None, "ok"):
-            raise RuntimeError(
-                f"TikTok ad query failed: HTTP {r.status_code} {error.get('code')} {error.get('message')}"
-            )
-        return payload.get("data") or {}
+        try:
+            payload = r.json() if r.content else {}
+        except ValueError:
+            raise ProviderError(f"TikTok ad query: HTTP {r.status_code} body is not JSON", status=r.status_code)
+        return parse_page(payload, r.status_code)
 
     def _ads(self, business_id: int, start: date, end: date):
-        cursor = None
+        search_id = None
         for _ in range(self.max_pages):
-            body = {
-                "filters": {
-                    "advertiser_business_ids": [int(business_id)],
-                    "ad_published_date_range": {"min": start.strftime("%Y%m%d"), "max": end.strftime("%Y%m%d")},
-                    "country_code": self.country_code,
-                },
-                "max_count": self.max_count,
-            }
-            if cursor:
-                body["search_id"], body["cursor"] = cursor
-            data = self._query(body)
-            yield from data.get("ads") or []
-            if not data.get("has_more"):
+            body = query_body(business_id, start, end, self.country_code, self.max_count, search_id)
+            ads, search_id = self._query(body)
+            yield from ads
+            if not search_id:
                 return
-            cursor = (data.get("search_id"), data.get("cursor"))
             time.sleep(0.5)
         logger.warning(f"tiktok_adlib_feeder hit max_pages for advertiser {business_id}")
 

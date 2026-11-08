@@ -34,29 +34,34 @@ class PdqHashEnricher(Enricher):
         for m in to_enrich.media:
             for media in m.all_inner_media(True):
                 media_id = media.get("id", "")
-                if (
-                    media.is_image()
-                    and "screenshot" not in media_id
-                    and "warc-file-" not in media_id
-                    and len(hd := self.calculate_pdq_hash(media.filename))
-                ):
+                if media.is_image() and "screenshot" not in media_id and "warc-file-" not in media_id:
+                    hd, quality = self.calculate_pdq(media.filename)
+                    if not hd:
+                        continue
                     media.set("pdq_hash", hd)
+                    # PDQ quality 0-100; near-uniform frames (black, white, flat colour) score low and match each
+                    # other, so near-duplicate search should ignore hashes below ~50
+                    media.set("pdq_quality", quality)
                     media_with_hashes.append(media.filename)
 
         logger.debug(f"Calculated '{len(media_with_hashes)}' perceptual hashes: {media_with_hashes}")
 
     def calculate_pdq_hash(self, filename):
         # returns a hexadecimal string with the perceptual hash for the given filename
+        return self.calculate_pdq(filename)[0]
+
+    def calculate_pdq(self, filename) -> tuple[str, int | None]:
+        """(hex hash, PDQ quality) for the given filename, or ("", None) if it can't be read as an image."""
         try:
             with Image.open(filename) as img:
                 # convert the image to RGB
                 image_rgb = np.array(img.convert("RGB"))
-                # compute the 256-bit PDQ hash (we do not store the quality score)
-                hash_array, _ = pdqhash.compute(image_rgb)
+                # compute the 256-bit PDQ hash and its quality score
+                hash_array, quality = pdqhash.compute(image_rgb)
                 hash = "".join(str(b) for b in hash_array)
-                return hex(int(hash, 2))[2:]
+                return hex(int(hash, 2))[2:], int(quality)
         except UnidentifiedImageError as e:
             logger.error(
                 f"Image {filename=} is likely corrupted or in unsupported format {e}: {traceback.format_exc()}"
             )
-        return ""
+        return "", None
