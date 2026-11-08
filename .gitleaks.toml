@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "recorded YouTube API responses, upstream's fake test service account and PO-token docs example"
+paths = [
+  '''tests/data/youtube/.*\.json''',
+  '''tests/data/test_service_account\.json''',
+  '''docs/source/how_to/(01_)?authentication_how_to\.md''',
+]
