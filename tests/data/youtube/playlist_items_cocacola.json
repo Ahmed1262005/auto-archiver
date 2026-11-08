@@ -1,0 +1,679 @@
+{
+ "kind": "youtube#playlistItemListResponse",
+ "etag": "KO797euGgVkxfhyFgA71h4JPgVg",
+ "nextPageToken": "EAAaHlBUOkNESWlFRGs1T1RFek1qUTJSRE5CTlRWQk1USQ",
+ "items": [
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "wREyRCyoLAQJW3m0mYdRU8BHXlI",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LnEyLUJsajd4dmd3",
+   "snippet": {
+    "publishedAt": "2026-11-04T01:44:49Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "តស់ ហូបចុកហ្អី?",
+    "description": "ម្ហូបខ្មែរយើងឈ្ងុយឆ្ងាញ់ស្រាប់ហើយ តែបើបានញ៉ាំ ជាមួយ កូកា-កូឡា ទៀត ត្រូវម៉ាច់ម៉ង!\nKhmer food already tastes amazing, but pair it with an ice-cold Coca-Cola and it just hits different! \n\n#CocaColaCambodia  #KhmerFood #Thebestcombo",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     },
+     "fhd": {
+      "url": "https://i.ytimg.com/vi/q2-Blj7xvgw/fhddefault.jpg",
+      "width": 1920,
+      "height": 1080
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 0,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "q2-Blj7xvgw"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "q2-Blj7xvgw",
+    "videoPublishedAt": "2026-11-04T01:44:49Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "JBMKPVZx3jTrrm9wLP4Ifd34oDU",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LjZwdDlfY0pFSlp3",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:52:47Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Discover Dawn Gerety’s Coca-Cola Mural in Anchorage, AK for America 250",
+    "description": "Discover how Anchorage artist Dawn Gerety celebrates the beauty of Alaska through Under the Midnight Sun, her Coca-Cola Paint the Nation mural created in celebration of America250. Inspired by Alaska’s long summer days, the mural reflects the wildlife, salmon, water, flowers, vivid colors, and extraordinary light that make summers in Anchorage unique.\n\nFor Dawn, the mural is a love letter to her hometown and the moments that bring people together during an Alaska summer, from fishing at midnight to gathering with friends and making the most of every hour of daylight. Created in collaboration with Coca-Cola Bottling of Alaska, Under the Midnight Sun celebrates Anchorage, community, and America’s 250th birthday.\n\nTimestamps\n00:00 Introduction\n00:14 A Love Letter to Alaska\n00:31 Summer in Alaska \n\n\nFind this Paint the Nation mural at 1016 W 6th Ave, Suite 303, Anchorage, AK 99501. Learn more about Dawn Gerety's mural: https://cokeurl.com/A250muralsDawnGYT\n\n\nLearn more about the America250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\nExplore more Paint the Nation murals that celebrate America's 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\n\n \n#CocaCola #America250 #PaintTheNation #Anchorage #Alaska #Mural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/6pt9_cJEJZw/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/6pt9_cJEJZw/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/6pt9_cJEJZw/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/6pt9_cJEJZw/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/6pt9_cJEJZw/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 1,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "6pt9_cJEJZw"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "6pt9_cJEJZw",
+    "videoPublishedAt": "2026-10-26T19:52:47Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "7_PcqJWk8QStdWsFf0U6Qi4FLxE",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LjZfSWhJS1dWMlBB",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:50:13Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Experience Jordan Dean's Coca-Cola Mural in Sturgis, SD, for America250",
+    "description": "Experience the energy of Sturgis, South Dakota, through a Coca-Cola Paint the Nation mural created by Jordan Dean in partnership with Harley-Davidson to celebrate America250. Inspired by the city’s motorcycle culture and the energy of the annual rally, the artwork brings Coca-Cola and motorcycle culture together through public art.\n\nBeyond the roar of the motorcycles, the mural also celebrates the year-round Sturgis community and the people who welcome visitors to the city. For the artist, the finished piece represents where the journey meets the destination and the unforgettable experiences that can happen along the way.\n\nTimestamps\n00:00 Introduction\n00:10 Partnership with Harley-Davidson\n00:24 The Largest Motorcycle Rally On the Planet\n00:43 Art at the Rally\n\nFind this Paint the Nation mural at 985 Harley-Davidson Way, Sturgis, SD 57785\nLearn more about the Sturgis mural: https://cokeurl.com/A250muralsJordanDYT\nExplore more Paint the Nation murals that celebrate America’s 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\nLearn more about the America250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\n#CocaCola #America250 #PaintTheNation #Sturgis #SouthDakota #HarleyDavidson #Mural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/6_IhIKWV2PA/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/6_IhIKWV2PA/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/6_IhIKWV2PA/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/6_IhIKWV2PA/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/6_IhIKWV2PA/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 2,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "6_IhIKWV2PA"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "6_IhIKWV2PA",
+    "videoPublishedAt": "2026-10-26T19:50:13Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "myJmlZ8FRYqUGbDtuXfUEC-haO0",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LjBMVWQtbGMwSUhB",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:48:49Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Learn More about Bailee the Kid’s Coca-Cola Mural in McAlester, OK, for America250",
+    "description": "Discover Cowboy in a Bottle, a Coca-Cola mural created by Bailee Green, a.k.a. BAILEETHEKID, in McAlester, Oklahoma. Inspired by Oklahoma’s agricultural history, wide-open ranches, and enduring cowboy spirit, the artwork was created to reflect the stories and culture of the local community.\n\nThe mural also incorporates a Coca-Cola bottle as a nod to the history of McAlester’s bottling plant. Bailee designed the work to leave room for interpretation, allowing Oklahomans and visitors to discover their own stories within the artwork and create new memories around the public space.\n\nTimestamps\n00:00 Introduction\n00:10 BAILEETHEKID's Goal for the Mural\n00:38 Public Art as a Shared Connection\n\nFind this Paint the Nation mural at 428 S George Nigh Expy, McAlester, OK 74501\nLearn more about Bailee the Kid’s mural: https://cokeurl.com/A250muralsBailGYT\n\nLearn more about the America250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\nExplore more Paint the Nation murals that celebrate America’s 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\n\n#CocaCola #America250 #PaintTheNation #McAlester #McAlesterMural #Oklahomamural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/0LUd-lc0IHA/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/0LUd-lc0IHA/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/0LUd-lc0IHA/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/0LUd-lc0IHA/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/0LUd-lc0IHA/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 3,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "0LUd-lc0IHA"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "0LUd-lc0IHA",
+    "videoPublishedAt": "2026-10-26T19:48:49Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "3Da3RugI3nQ_b3vPxT8-mKYUCXI",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LkEwYm1vam5uN1Nn",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:47:20Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Celebrate Persue’s Coca-Cola Mural in Los Angeles, CA, for America250",
+    "description": "Celebrate America’s 250th birthday with artist Persue and his Coca-Cola Paint the Nation mural at the Los Angeles Memorial Coliseum. Created with the energy of a birthday celebration in mind, Persue’s colorful, character-driven artwork brings Coca-Cola imagery into a visual world inspired by Los Angeles and its culture.\n\nThe mural features a giant birthday cake surrounded by imagery representing LA, including sports, skateboarding, palm trees, music, and street culture. Together, the characters and imagery create a celebration of Los Angeles, Team USA, and America’s 250th birthday.\n\nTimestamps\n00:00 Introduction\n00:17 Coca-Cola and American Culture\n00:33 Persue Explains the Centerpiece \n\n\nFind this Paint the Nation mural outside the Los Angeles Memorial Coliseum, located at 3911 S Figueroa St, Los Angeles, CA 90037\nLearn more about Persue’s mural: https://cokeurl.com/A250muralsDavePRYT  \n\nLearn more about the America250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\nExplore more Paint the Nation murals that celebrate America’s 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\n\n#CocaCola #America250 #PaintTheNation #LosAngeles #LosAngelesMural #Mural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/A0bmojnn7Sg/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/A0bmojnn7Sg/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/A0bmojnn7Sg/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/A0bmojnn7Sg/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/A0bmojnn7Sg/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 4,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "A0bmojnn7Sg"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "A0bmojnn7Sg",
+    "videoPublishedAt": "2026-10-26T19:47:20Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "cQEHulnCovCAMPIkGMeAs7uu8mA",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LmNxbFlWMGRfQkcw",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:45:19Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Explore Los Otros’ Coca-Cola Mural in Brownsville, TX, for America250",
+    "description": "Explore how Los Otros, a mural duo founded by artists Shek Vega and Nik Soup, celebrates the people, culture, and traditions of Brownsville, Texas, through a Coca-Cola Paint the Nation mural created for America250. Located along the border, Brownsville serves as a gateway between two cultures, bringing together traditions, flavors, music, dance, and stories that help shape the city’s distinct identity.\n\nLocated in downtown Brownsville, the mural celebrates the diversity of the local community while marking 250 years of America. Through public art, Los Otros highlights the people and cultural influences that make Brownsville an important part of the America250 story.\n\nTimestamps\n00:00 Introduction\n00:10 A Closer Look at Brownsville\n\nFind this Paint the Nation mural at 1200 E Elizabeth St, Brownsville, TX 78520. Learn more about Los Otros' mural: https://cokeurl.com/A250muralsLosOYT\n\nLearn more about the America 250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\nExplore more Paint the Nation murals that celebrate America's 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\n\n#CocaCola #America250 #PaintTheNation #BrownsvilleTX #Mural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/cqlYV0d_BG0/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/cqlYV0d_BG0/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/cqlYV0d_BG0/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/cqlYV0d_BG0/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/cqlYV0d_BG0/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 5,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "cqlYV0d_BG0"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "cqlYV0d_BG0",
+    "videoPublishedAt": "2026-10-26T19:45:19Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "6iwsdSOChX37XxrNmp52vtd_nd0",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LlZLZXZmMDBKYnR3",
+   "snippet": {
+    "publishedAt": "2026-10-26T19:44:48Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Experience Juan Navarro’s Coca-Cola Mural in Los Angeles, CA, for America250",
+    "description": "Learn more about the Coca-Cola Paint the Nation mural at Evergreen Recreation Center in Los Angeles, created in celebration of America250. Inspired by conversations with community members, the artist Juan Navarro developed a mural that reflects Los Angeles through familiar imagery, including the LA skyline at sunset, palm trees, and the loquat tree.\n\nThe mural also draws on LA’s street art and graffiti culture while highlighting the stories of the people who call the city home. For the artist, a first-generation immigrant, the project became an opportunity to celebrate community, creativity, and the American experience through public art.\n\nTimestamps\n00:00 Introduction\n00:13 City Culture in Los Angeles\n00:34 Speaking to the Los Angeles Community\n\nFind this Paint the Nation mural outside the Evergreen Recreation Center, located at 2844 E 2nd St, Los Angeles, CA 90033. Learn more about Juan Navarro's mural: https://cokeurl.com/A250muralsJuanNYT\n\nLearn more about the America 250 Celebration: https://www.coca-cola.com/us/en/offerings/coca-cola/america250\n\nExplore more Paint the Nation murals that celebrate America's 250th birthday: https://www.coca-cola.com/us/en/offerings/coca-cola/america250/murals\n\n#CocaCola #America250 #PaintTheNation #LosAngeles #LosAngelesMural #Mural",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/VKevf00Jbtw/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/VKevf00Jbtw/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/VKevf00Jbtw/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/VKevf00Jbtw/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/VKevf00Jbtw/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 6,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "VKevf00Jbtw"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "VKevf00Jbtw",
+    "videoPublishedAt": "2026-10-26T19:44:48Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "zOAZfN-fEh25NC32_cEpJnL2rWc",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LjJSOGRQa0pyb2Zj",
+   "snippet": {
+    "publishedAt": "2026-10-23T08:24:58Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Apnon Se Bana Apnon Ke Liye - Value Chain Stories",
+    "description": "Haleema walked into Coca-Cola İçecek Pakistan as a Management Trainee. Today, she's one of the youngest Area Sales Managers in the system  and spends as much time mentoring new talent as she does close the day's targets. It's what happens when young people are trusted with real responsibility.\n\n#ApnonSeBanaApnonKeLiye #CocaColaPakistan",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     },
+     "uhd": {
+      "url": "https://i.ytimg.com/vi/2R8dPkJrofc/uhddefault.jpg",
+      "width": 3840,
+      "height": 2160
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 7,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "2R8dPkJrofc"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "2R8dPkJrofc",
+    "videoPublishedAt": "2026-10-23T08:24:58Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "NDgq4wKKkC_HIjH3l74CrPq-aYg",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3Lk05Y2gzVmR1dmlN",
+   "snippet": {
+    "publishedAt": "2026-10-07T11:17:15Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "Apnon Se Bana Apnon Ke Liye - Value Chain Stories",
+    "description": "Mohsin Traders’ story is one of growth through change.\n\nWhat began as a small trading counter in Raiwind has grown into a modern, technology-enabled operation by continuing to adapt with time. From using data and new systems to adopting solar energy and an electric forklift, the business has evolved while staying rooted in the same community.\n\nMohsin’s story shows how decades of experience, paired with new thinking, can keep a business moving forward. #CocaColaPakistan #ApnonSeBanaApnonKeLiye",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     },
+     "uhd": {
+      "url": "https://i.ytimg.com/vi/M9ch3VduviM/uhddefault.jpg",
+      "width": 3840,
+      "height": 2160
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 8,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "M9ch3VduviM"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "M9ch3VduviM",
+    "videoPublishedAt": "2026-10-07T11:17:15Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "Sazzd5MtEDl1CjmsVsVgJmj1XfM",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LnY2SDdUWXFLd3J3",
+   "snippet": {
+    "publishedAt": "2026-10-01T10:36:55Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "This Dashain, bring home the happiness with Coca-Cola",
+    "description": "Home is where the heart is.\nThis festive season, meet your loved ones, share the laughter and the moments that make the festival special with Coca-Cola.\n\n#BharauKhusi #FillHappiness #Dashain2083 #CocaCola #CocaColaNepal\n\nCredits:\nAgency: Prisma Advertising\nProduction House: Top Of The World Films Pvt. Ltd.\nCast: Pradeep Khadka, Swastima Khadka, Bishal Pahari, Loonibha Tuladhar, Nikita Acharya, Aabhiskar KC, Manoj Dahal, Geeta Adhikari, Khusi Subedi\nDirector: Anup Sapkota\nDOP: Nihal Bhandari\nChief Assistant Director: Devendra Khatri\nProducer/HOP: Shubhashish Shah\nMusic Producer: Kobid Bajracharya\nEditor: Mohit Amatya\nGraphics and Animation: Seventy Seven Lab\nColor Grading: Anjon Limbu\nProduction Designer: Numa Sambahamphe\nAssistant PD: Lujala Shakya\nArt team: Bishal Thapa, Amar Budhathoki\nProduction Coordinator: Everest Pudasaini\nAssistant Production: Bidur Devkota\nSync Sound: Sudeep Rasaili\nLights: Photon Films and Lights\nGaffer: Ganesh Singh Thakuri\nFocus Puller: Rabi Gubaju\nLights and Grip: Madhu Khati(Abhinash), Bikram Jirel, Nabin Niroula, Santosh Singh Thakuri, Krishna Sigdel, Narendra Bdr Chhetri\nLights Transport: Anil Jyakhwo and Team\nMakeup & Hair: Mohan Sunuwar, Subash Lama, Sanju Thapa\nStylist: Anush Shrestha\nBehind the scenes team: Prashant Shrestha and Sujit\nCamera Caretaker:\nSpot Boys: Pawan Rokka, Santosh Rokka\nKitchen: Rupak Shrestha and team (Sabin, Raju)\nLocation Credits: Gurje Villa Budhanilkantha, Samadhi House Budhanilkantha, Misumi Nepal Kathmandu",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/v6H7TYqKwrw/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/v6H7TYqKwrw/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/v6H7TYqKwrw/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/v6H7TYqKwrw/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/v6H7TYqKwrw/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 9,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "v6H7TYqKwrw"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "v6H7TYqKwrw",
+    "videoPublishedAt": "2026-10-01T10:36:55Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "Mxb-qge08iJRyjPpkJHQPINCisU",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3Lm42c0JUSjhIQ01j",
+   "snippet": {
+    "publishedAt": "2026-09-30T15:42:24Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "It’s a curated type of chaos.",
+    "description": "Get an exclusive look behind the scenes of REGGIE IN THE SUMMER, then catch up on the full series.",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     },
+     "shortsAspectRatio": {
+      "url": "https://i.ytimg.com/vi/n6sBTJ8HCMc/sardefault.jpg",
+      "width": 720,
+      "height": 1280
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 10,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "n6sBTJ8HCMc"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "n6sBTJ8HCMc",
+    "videoPublishedAt": "2026-09-30T15:42:24Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "pMpy4RHWQL0L5Z82oeGwbB77ATQ",
+   "id": "VVVvc1hjdGFUWXhONFlQSXZJNUZwY3J3LkQ5a2VtWVd3cE1N",
+   "snippet": {
+    "publishedAt": "2026-09-29T04:45:47Z",
+    "channelId": "UCosXctaTYxN4YPIvI5Fpcrw",
+    "title": "This Dashain, fill happiness with Coca-Cola!",
+    "description": "Every Dashain journey leads home to family. This Dashain Coca-Cola is giving away thousands of Flight and Bus tickets to bring you closer to your loved ones. *T&C apply\n\n#BharauKhusi #FillHappiness #Dashain2083 #CocaCola #CocaColaNepal",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/D9kemYWwpMM/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/D9kemYWwpMM/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/D9kemYWwpMM/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     },
+     "standard": {
+      "url": "https://i.ytimg.com/vi/D9kemYWwpMM/sddefault.jpg",
+      "width": 640,
+      "height": 480
+     },
+     "maxres": {
+      "url": "https://i.ytimg.com/vi/D9kemYWwpMM/maxresdefault.jpg",
+      "width": 1280,
+      "height": 720
+     }
+    },
+    "channelTitle": "Coca-Cola",
+    "playlistId": "UUosXctaTYxN4YPIvI5Fpcrw",
+    "position": 11,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "D9kemYWwpMM"
+    },
+    "videoOwnerChannelTitle": "Coca-Cola",
+    "videoOwnerChannelId": "UCosXctaTYxN4YPIvI5Fpcrw"
+   },
+   "contentDetails": {
+    "videoId": "D9kemYWwpMM",
+    "videoPublishedAt": "2026-09-29T04:45:47Z"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  }
+ ],
+ "pageInfo": {
+  "totalResults": 1110,
+  "resultsPerPage": 50
+ }
+}

@@ -661,7 +661,10 @@ Here's how that would look: \n\nsteps:\n  extractors:\n  - [your_extractor_name_
         # signal completion to databases and archivers
         for d in self.databases:
             try:
-                d.done(result)
+                if result.is_success():
+                    d.done(result)
+                else:
+                    d.failed(result, reason=result.status)
             except Exception as e:
                 logger.error(f"Database {d.name}: {e}: {traceback.format_exc()}")
 

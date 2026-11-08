@@ -288,3 +288,24 @@ def test_check_for_updates_new_version_available(orchestrator, mocker):
     )
     # should complete without error
     orchestrator.check_for_updates()
+
+
+@pytest.mark.parametrize("extracted, expect_done", [(False, False), (Metadata().success("x"), True)])
+def test_archive_reports_failed_when_nothing_succeeded(orchestrator, mocker, extracted, expect_done):
+    mocker.patch("auto_archiver.core.orchestrator.check_url_or_raise")
+    extractor = mocker.MagicMock()
+    extractor.sanitize_url.side_effect = lambda u: u
+    extractor.download.return_value = extracted
+    db = mocker.MagicMock()
+    db.fetch.return_value = False
+    formatter = mocker.MagicMock()
+    formatter.format.return_value = None
+    orchestrator.extractors, orchestrator.enrichers, orchestrator.storages = [extractor], [], []
+    orchestrator.databases, orchestrator.formatters = [db], [formatter]
+
+    orchestrator.archive(Metadata().set_url("https://example.com/ad/1"))
+
+    assert db.done.called is expect_done
+    assert db.failed.called is not expect_done
+    if not expect_done:
+        assert db.failed.call_args.kwargs["reason"] == "nothing archived"
