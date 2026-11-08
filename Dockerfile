@@ -11,7 +11,7 @@ ARG TARGETARCH
 
 # Installing system dependencies
 RUN	apt-get update && \
-    apt-get install -y --no-install-recommends gcc ffmpeg fonts-noto exiftool python3-tk
+    apt-get install -y --no-install-recommends gcc ffmpeg libchromaprint-tools fonts-noto exiftool python3-tk
 
 # Poetry and runtime
 FROM base AS runtime

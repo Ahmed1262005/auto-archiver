@@ -134,3 +134,57 @@ def test_non_json_body_raises(feeder, mocker):
     mocker.patch("requests.post", return_value=r)
     with pytest.raises(ProviderError, match="502"):
         list(feeder)
+
+
+DETAIL_OK = {
+    "data": {
+        "ad": {
+            "id": 1879486140107266,
+            "first_shown_date": "20261102",
+            "status": "active",
+            "reach": {
+                "unique_users_seen": "500K-600K",
+                "unique_users_seen_by_country": {"FR": "560K"},
+                "unique_users_seen_breakdowns": [
+                    {
+                        "region": "FR",
+                        "unique_users_seen": "560K",
+                        "breakdowns": [{"age": "18-24", "gender": "MALE", "unique_users_seen": "33K"}],
+                    }
+                ],
+            },
+        },
+        "ad_group": {"targeting_info": {"country": ["FR"], "number_of_users_targeted": "12.4M-15.2M"}},
+        "advertiser": {"business_id": 6876454313946776321, "business_name": "GUCCIO GUCCI SPA"},
+    },
+    "error": {"code": "ok", "message": "", "log_id": "x"},
+}
+
+
+def test_detail_body_and_parse():
+    from auto_archiver.modules.tiktok_adlib_feeder.tiktok_adlib_feeder import detail_body, parse_detail
+
+    assert detail_body("1879486140107266") == {"ad_id": 1879486140107266}
+    assert parse_detail(DETAIL_OK)["ad"]["reach"]["unique_users_seen_by_country"] == {"FR": "560K"}
+
+
+@pytest.mark.parametrize(
+    "payload,status,schema,code",
+    [
+        ([], 200, True, None),
+        ({"data": {}, "error": {"code": "ok"}}, 200, True, None),
+        ({"data": {"ad": {"status": "active"}}, "error": {"code": "ok"}}, 200, True, None),
+        ({"data": {"ad": {"id": 1, "reach": "0-1K"}}, "error": {"code": "ok"}}, 200, True, None),
+        ({"data": {"ad": {"id": 1}, "ad_group": []}, "error": {"code": "ok"}}, 200, True, None),
+        ({"data": {}, "error": {"code": "invalid_params", "message": "ad_id not found"}}, 400, False, "invalid_params"),
+        ({"error": {"code": "rate_limit_exceeded"}}, 429, False, "rate_limit_exceeded"),
+        ({"error": {"code": "access_token_invalid"}}, 401, False, "access_token_invalid"),
+    ],
+)
+def test_parse_detail_errors(payload, status, schema, code):
+    from auto_archiver.modules.tiktok_adlib_feeder.tiktok_adlib_feeder import parse_detail
+    from auto_archiver.utils.provider_errors import ProviderError
+
+    with pytest.raises(ProviderError) as e:
+        parse_detail(payload, status)
+    assert e.value.schema is schema and e.value.code == code

@@ -16,8 +16,14 @@ SELECT creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_n
   creative_page_url,
   MIN(SAFE_CAST(rs.first_shown AS DATE)) AS first_shown,
   MAX(SAFE_CAST(rs.last_shown AS DATE)) AS last_shown,
+  ANY_VALUE(advertiser_location) AS advertiser_location,
+  ANY_VALUE(advertiser_verification_status) AS advertiser_verification_status,
+  ANY_VALUE(topic) AS topic, ANY_VALUE(ad_funded_by) AS ad_funded_by,
+  ANY_VALUE(is_funded_by_google_ad_grants) AS is_funded_by_google_ad_grants,
+  ANY_VALUE(audience_selection_approach_info) AS audience_selection,
   ARRAY_AGG(STRUCT(rs.region_code, rs.first_shown, rs.last_shown,
-    rs.times_shown_lower_bound, rs.times_shown_upper_bound)) AS regions
+    rs.times_shown_lower_bound, rs.times_shown_upper_bound, rs.times_shown_start_date, rs.times_shown_end_date,
+    rs.times_shown_availability_date, rs.surface_serving_stats.surface_serving_stats AS surfaces)) AS regions
 FROM `{TABLE}`, UNNEST(region_stats) rs
 WHERE advertiser_id IN UNNEST(@advertiser_ids)
   AND SAFE_CAST(rs.last_shown AS DATE) >= @start AND SAFE_CAST(rs.first_shown AS DATE) <= @end
