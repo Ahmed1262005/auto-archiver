@@ -1,0 +1,49 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "wD0MyvGCBLkSR-ca71n_hzbNF_4",
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "yBoLub7sPCazkWln1Fk1ZgwYrEY",
+      "id": "UCosXctaTYxN4YPIvI5Fpcrw",
+      "snippet": {
+        "title": "Coca-Cola",
+        "description": "Welcome to Coca-Cola's YouTube channel! Our channel is dedicated to the Real Magic that Coca-Cola inspires around the world. Check out our videos for new and original content featuring music, culture, entertainment, sports, and more. Join the fun through magical experiences on stage, on the field, in game, or behind the scenes.\n\nExperience the #RealMagic of Coca-Cola and keep up with with us by subscribing to the channel for the latest updates.\n\nDiscover more at https://www.coca-cola.com\n\n",
+        "customUrl": "@coca-cola",
+        "publishedAt": "2006-01-01T20:14:52Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/ytc/AIdro_mVlE_uWoX7MvYwat1BlxDg84uP5DWu3hnToMlNpLB7Smg=s88-c-k-c0x00ffffff-no-rj",
+            "width": 88,
+            "height": 88
+          },
+          "medium": {
+            "url": "https://yt3.ggpht.com/ytc/AIdro_mVlE_uWoX7MvYwat1BlxDg84uP5DWu3hnToMlNpLB7Smg=s240-c-k-c0x00ffffff-no-rj",
+            "width": 240,
+            "height": 240
+          },
+          "high": {
+            "url": "https://yt3.ggpht.com/ytc/AIdro_mVlE_uWoX7MvYwat1BlxDg84uP5DWu3hnToMlNpLB7Smg=s800-c-k-c0x00ffffff-no-rj",
+            "width": 800,
+            "height": 800
+          }
+        },
+        "localized": {
+          "title": "Coca-Cola",
+          "description": "Welcome to Coca-Cola's YouTube channel! Our channel is dedicated to the Real Magic that Coca-Cola inspires around the world. Check out our videos for new and original content featuring music, culture, entertainment, sports, and more. Join the fun through magical experiences on stage, on the field, in game, or behind the scenes.\n\nExperience the #RealMagic of Coca-Cola and keep up with with us by subscribing to the channel for the latest updates.\n\nDiscover more at https://www.coca-cola.com\n\n"
+        },
+        "country": "US"
+      },
+      "contentDetails": {
+        "relatedPlaylists": {
+          "likes": "",
+          "uploads": "UUosXctaTYxN4YPIvI5Fpcrw"
+        }
+      }
+    }
+  ]
+}

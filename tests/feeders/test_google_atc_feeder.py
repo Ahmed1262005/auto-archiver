@@ -52,3 +52,28 @@ def test_item_fields(setup_module, bq):
     assert item.get("last_shown") == "2026-11-04"
     assert item.get("regions")[0]["region_code"] == "GB"
     assert item.get("media_urls") == []
+
+
+def test_fetch_page_window_and_capped(bq):
+    from auto_archiver.modules.google_atc_feeder.google_atc_feeder import fetch_page
+
+    bq.query.return_value.result.return_value = [ROW, ROW | {"creative_id": "CR2"}, ROW | {"advertiser_id": "AR2"}]
+    bq.query.return_value.total_bytes_billed = 55 * 10**9
+    page = fetch_page(bq, ["AR10307956454253920257", "AR2"], date(2026, 11, 4), date(2026, 11, 4), 2, 60 * 10**9)
+    assert page["capped"] == ["AR10307956454253920257"]
+    assert page["bytes_billed"] == 55 * 10**9 and len(page["rows"]) == 3
+    params = {
+        p.name: p.value for p in bq.query.call_args.kwargs["job_config"].query_parameters if p.name != "advertiser_ids"
+    }
+    assert params == {"start": date(2026, 11, 4), "end": date(2026, 11, 4), "max_rows_per_advertiser": 2}
+    assert "@start" in bq.query.call_args.args[0] and "@end" in bq.query.call_args.args[0]
+
+
+def test_quota_error_propagates(bq):
+    from google.api_core.exceptions import Forbidden
+
+    from auto_archiver.modules.google_atc_feeder.google_atc_feeder import fetch_page
+
+    bq.query.return_value.result.side_effect = Forbidden("Custom quota exceeded: QueryUsagePerDay")
+    with pytest.raises(Forbidden):
+        fetch_page(bq, ["AR1"], date(2026, 11, 4), date(2026, 11, 4), 2000, 60 * 10**9)

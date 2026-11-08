@@ -16,15 +16,46 @@ SELECT creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_n
   creative_page_url,
   MIN(SAFE_CAST(rs.first_shown AS DATE)) AS first_shown,
   MAX(SAFE_CAST(rs.last_shown AS DATE)) AS last_shown,
+  ANY_VALUE(advertiser_location) AS advertiser_location,
+  ANY_VALUE(advertiser_verification_status) AS advertiser_verification_status,
+  ANY_VALUE(topic) AS topic, ANY_VALUE(ad_funded_by) AS ad_funded_by,
+  ANY_VALUE(is_funded_by_google_ad_grants) AS is_funded_by_google_ad_grants,
+  ANY_VALUE(audience_selection_approach_info) AS audience_selection,
   ARRAY_AGG(STRUCT(rs.region_code, rs.first_shown, rs.last_shown,
-    rs.times_shown_lower_bound, rs.times_shown_upper_bound)) AS regions
+    rs.times_shown_lower_bound, rs.times_shown_upper_bound, rs.times_shown_start_date, rs.times_shown_end_date,
+    rs.times_shown_availability_date, rs.surface_serving_stats.surface_serving_stats AS surfaces)) AS regions
 FROM `{TABLE}`, UNNEST(region_stats) rs
-WHERE advertiser_id IN UNNEST(@advertiser_ids) AND SAFE_CAST(rs.last_shown AS DATE) >= @since
+WHERE advertiser_id IN UNNEST(@advertiser_ids)
+  AND SAFE_CAST(rs.last_shown AS DATE) >= @start AND SAFE_CAST(rs.first_shown AS DATE) <= @end
 GROUP BY creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_name, ad_format_type,
   creative_page_url
 QUALIFY ROW_NUMBER() OVER (PARTITION BY advertiser_id ORDER BY last_shown DESC) <= @max_rows_per_advertiser
-ORDER BY advertiser_id, last_shown DESC
+ORDER BY advertiser_id, last_shown DESC, creative_id
 """
+
+
+def query_config(advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int):
+    return bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ArrayQueryParameter("advertiser_ids", "STRING", list(advertiser_ids)),
+            bigquery.ScalarQueryParameter("start", "DATE", start),
+            bigquery.ScalarQueryParameter("end", "DATE", end),
+            bigquery.ScalarQueryParameter("max_rows_per_advertiser", "INT64", max_rows_per_advertiser),
+        ],
+        maximum_bytes_billed=maximum_bytes_billed,
+    )
+
+
+def fetch_page(client, advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int):
+    """One BigQuery job for every advertiser shown in [start, end]: the whole result is a single page.
+    `capped` lists advertisers that hit the per-advertiser row cap, so the result for them is incomplete."""
+    job = client.query(
+        QUERY, job_config=query_config(advertiser_ids, start, end, max_rows_per_advertiser, maximum_bytes_billed)
+    )
+    rows = [dict(r) for r in job.result()]
+    counts = Counter(r["advertiser_id"] for r in rows)
+    capped = sorted(a for a, n in counts.items() if n >= max_rows_per_advertiser)
+    return {"rows": rows, "bytes_billed": job.total_bytes_billed, "capped": capped}
 
 
 class GoogleATCFeeder(Feeder):
@@ -42,22 +73,21 @@ class GoogleATCFeeder(Feeder):
         creds = service_account.Credentials.from_service_account_info(json.loads(info))
         return bigquery.Client(credentials=creds, project=self.project or creds.project_id)
 
-    def _rows(self, since: date):
-        config = bigquery.QueryJobConfig(
-            query_parameters=[
-                bigquery.ArrayQueryParameter("advertiser_ids", "STRING", list(self.advertiser_ids)),
-                bigquery.ScalarQueryParameter("since", "DATE", since),
-                bigquery.ScalarQueryParameter("max_rows_per_advertiser", "INT64", self.max_rows_per_advertiser),
-            ],
-            maximum_bytes_billed=self.maximum_gb_billed * 10**9,
+    def _rows(self, start: date, end: date):
+        page = fetch_page(
+            self._client(),
+            self.advertiser_ids,
+            start,
+            end,
+            self.max_rows_per_advertiser,
+            self.maximum_gb_billed * 10**9,
         )
-        job = self._client().query(QUERY, job_config=config)
-        rows = [dict(r) for r in job.result()]
-        logger.info(f"google_atc_feeder: {len(rows)} creatives, {(job.total_bytes_billed or 0) / 1e9:.1f} GB billed")
-        for advertiser_id, n in Counter(r["advertiser_id"] for r in rows).items():
-            if n >= self.max_rows_per_advertiser:
-                logger.warning(f"google_atc_feeder hit max_rows_per_advertiser for {advertiser_id}")
-        return rows
+        logger.info(
+            f"google_atc_feeder: {len(page['rows'])} creatives, {(page['bytes_billed'] or 0) / 1e9:.1f} GB billed"
+        )
+        for advertiser_id in page["capped"]:
+            logger.warning(f"google_atc_feeder hit max_rows_per_advertiser for {advertiser_id}")
+        return page["rows"]
 
     @staticmethod
     def to_metadata(row: dict) -> Metadata:
@@ -77,6 +107,6 @@ class GoogleATCFeeder(Feeder):
         return m
 
     def __iter__(self) -> Metadata:
-        since = datetime.now(UTC).date() - timedelta(days=self.days_back)
-        for row in self._rows(since):
+        end = datetime.now(UTC).date()
+        for row in self._rows(end - timedelta(days=self.days_back), end):
             yield self.to_metadata(row)
