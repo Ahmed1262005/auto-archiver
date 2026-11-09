@@ -1,7 +1,7 @@
 # Platform Status
 
-Last run: 2026-08-31T12:35:50.578848+00:00  
-Auto Archiver version: 1.2.7
+Last run: 2026-11-09T15:41:44.896267+00:00  
+Auto Archiver version: 1.3.0
 
 | Platform | Content Type | Config | Accessible | Archived |
 |----------|-------------|--------|------------|----------|
