@@ -63,10 +63,22 @@ def test_fetch_page_window_and_capped(bq):
     assert page["capped"] == ["AR10307956454253920257"]
     assert page["bytes_billed"] == 55 * 10**9 and len(page["rows"]) == 3
     params = {
-        p.name: p.value for p in bq.query.call_args.kwargs["job_config"].query_parameters if p.name != "advertiser_ids"
+        p.name: getattr(p, "value", None) or getattr(p, "values", None)
+        for p in bq.query.call_args.kwargs["job_config"].query_parameters
+        if p.name not in ("advertiser_ids", "formats")
     }
     assert params == {"start": date(2026, 11, 4), "end": date(2026, 11, 4), "max_rows_per_advertiser": 2}
     assert "@start" in bq.query.call_args.args[0] and "@end" in bq.query.call_args.args[0]
+
+
+def test_fetch_page_format_filter(bq):
+    from auto_archiver.modules.google_atc_feeder.google_atc_feeder import fetch_page
+
+    bq.query.return_value.result.return_value = []
+    fetch_page(bq, ["AR1"], date(2026, 11, 4), date(2026, 11, 4), 2, 60 * 10**9, formats=["video"])
+    params = {p.name: p.values for p in bq.query.call_args.kwargs["job_config"].query_parameters if p.name == "formats"}
+    assert params == {"formats": ["VIDEO"]}
+    assert "ad_format_type IN UNNEST(@formats)" in bq.query.call_args.args[0]
 
 
 def test_quota_error_propagates(bq):

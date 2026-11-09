@@ -27,6 +27,7 @@ SELECT creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_n
 FROM `{TABLE}`, UNNEST(region_stats) rs
 WHERE advertiser_id IN UNNEST(@advertiser_ids)
   AND SAFE_CAST(rs.last_shown AS DATE) >= @start AND SAFE_CAST(rs.first_shown AS DATE) <= @end
+  AND (ARRAY_LENGTH(@formats) = 0 OR ad_format_type IN UNNEST(@formats))
 GROUP BY creative_id, advertiser_id, advertiser_disclosed_name, advertiser_legal_name, ad_format_type,
   creative_page_url
 QUALIFY ROW_NUMBER() OVER (PARTITION BY advertiser_id ORDER BY last_shown DESC) <= @max_rows_per_advertiser
@@ -34,23 +35,30 @@ ORDER BY advertiser_id, last_shown DESC, creative_id
 """
 
 
-def query_config(advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int):
+def query_config(
+    advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int, formats=()
+):
+    """`formats`: ad_format_type values to keep (VIDEO, IMAGE, TEXT); empty keeps every format."""
     return bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ArrayQueryParameter("advertiser_ids", "STRING", list(advertiser_ids)),
             bigquery.ScalarQueryParameter("start", "DATE", start),
             bigquery.ScalarQueryParameter("end", "DATE", end),
             bigquery.ScalarQueryParameter("max_rows_per_advertiser", "INT64", max_rows_per_advertiser),
+            bigquery.ArrayQueryParameter("formats", "STRING", [f.upper() for f in formats]),
         ],
         maximum_bytes_billed=maximum_bytes_billed,
     )
 
 
-def fetch_page(client, advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int):
+def fetch_page(
+    client, advertiser_ids, start: date, end: date, max_rows_per_advertiser: int, maximum_bytes_billed: int, formats=()
+):
     """One BigQuery job for every advertiser shown in [start, end]: the whole result is a single page.
     `capped` lists advertisers that hit the per-advertiser row cap, so the result for them is incomplete."""
     job = client.query(
-        QUERY, job_config=query_config(advertiser_ids, start, end, max_rows_per_advertiser, maximum_bytes_billed)
+        QUERY,
+        job_config=query_config(advertiser_ids, start, end, max_rows_per_advertiser, maximum_bytes_billed, formats),
     )
     rows = [dict(r) for r in job.result()]
     counts = Counter(r["advertiser_id"] for r in rows)
