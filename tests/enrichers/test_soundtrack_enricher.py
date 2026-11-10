@@ -63,6 +63,9 @@ def test_db_per_half_second():
     assert len(db) == 3 and abs(db[0] - 20 * np.log10(0.5)) < 0.1 and db[1] < -100
 
 
+@pytest.mark.skipif(
+    not importlib.util.find_spec("librosa"), reason="pip install -r soundtrack_enricher/requirements.txt"
+)
 def test_key_of_a_major_triad():
     t = np.arange(st.SR * 4) / st.SR
     y = sum(np.sin(2 * np.pi * f * t) for f in (220.0, 277.18, 329.63)).astype(np.float32) / 3
