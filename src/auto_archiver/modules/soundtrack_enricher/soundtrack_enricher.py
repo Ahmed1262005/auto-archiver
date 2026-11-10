@@ -384,8 +384,9 @@ def _clap(torch, music: np.ndarray, vocals: np.ndarray, ranges: list[dict], o: d
         sung, spoken = [], []
         if vw:
             pv = (CLAP_SCALE * _embed([w for _, w in vw]) @ texts["voice"].T).softmax(-1)
+            dur = len(vocals) / SR
             for (t, _), p in zip(vw, pv):
-                (sung if float(p[0]) > 0.5 else spoken).append((t, t + VOICE_WINDOW_S))
+                (sung if float(p[0]) > 0.5 else spoken).append((t, min(t + VOICE_WINDOW_S, dur)))
         sung_in_music = sum(_overlap(a_, b_, ranges) for a_, b_ in _merge(sung))
         music_s = sum(r["end"] - r["start"] for r in ranges)
         return {
