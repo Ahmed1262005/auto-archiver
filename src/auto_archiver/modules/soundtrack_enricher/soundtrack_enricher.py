@@ -123,8 +123,9 @@ def analyze(path: str, **opts) -> dict:
         vocals, music = _separate(torch, mix, o, device)
         result["timings"]["separate_s"] = round(time.time() - t, 2)
 
-        ranges = _ranges(_db(music), float(o["music_threshold_db"]), float(o["min_music_s"]), float(o["max_gap_s"]))
         total = mix.shape[1] / SR
+        ranges = _ranges(_db(music), float(o["music_threshold_db"]), float(o["min_music_s"]), float(o["max_gap_s"]))
+        ranges = [dict(r, end=min(r["end"], round(total, 2))) for r in ranges]
         result["music"] = {
             "present": bool(ranges),
             "ranges": ranges,
