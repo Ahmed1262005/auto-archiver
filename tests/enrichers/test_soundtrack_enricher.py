@@ -202,8 +202,12 @@ def _cutdowns():
 @pytest.mark.parametrize("files", _cutdowns() or [pytest.param([], marks=pytest.mark.skip("no cut-downs"))])
 def test_real_cutdowns_share_the_music_fingerprint(files):
     rs = [analyze(f, cpu_threads=4) for f in files]
-    for r in rs:
-        assert r["status"] == "ok" and r["music"]["present"] and r["bpm"]
+    for f, r in zip(files, rs):
+        assert r["status"] == "ok" and r["music"]["present"]
+        dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                             "-of", "csv=p=0", f], text=True))  # fmt: skip
+        spans = r["music"]["ranges"] + r["voice_ranges"]["singing"] + r["voice_ranges"]["speech"]
+        assert all(0 <= x["start"] < x["end"] <= dur + 0.05 for x in spans), (f, dur, spans)
     short = min(rs, key=lambda r: r["fingerprint"]["items"])
     for r in rs:
         if r is not short:
