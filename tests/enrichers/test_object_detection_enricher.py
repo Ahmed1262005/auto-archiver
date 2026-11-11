@@ -151,6 +151,20 @@ def test_bad_options(fx, tmp_path):
         analyze(fx["blank"], logo_prompts=[])
     with pytest.raises(ValueError, match="brand_refs_dir"):
         analyze(fx["blank"], layers=["logos"], brand_refs_dir=str(tmp_path / "missing"))
+    with pytest.raises(ValueError, match="device"):
+        analyze(fx["blank"], device="tpu")
+
+
+def test_device(fx, mocker):
+    assert od._device({"device": "cpu"}) == "cpu"
+    mocker.patch("torch.cuda.is_available", return_value=False)
+    assert od._device({"device": "auto"}) == "cpu"
+    with pytest.raises(EnricherServiceError) as e:
+        od._device({"device": "cuda"})
+    assert e.value.reason == "tool_missing"
+    mocker.patch("torch.cuda.is_available", return_value=True)
+    assert od._device({"device": "auto"}) == "cuda"
+    assert od._device({"device": "cuda:1"}) == "cuda:1"
 
 
 # ---------- model / runtime failures -> EnricherServiceError ----------
