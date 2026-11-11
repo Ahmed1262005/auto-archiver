@@ -42,6 +42,7 @@ DEFAULTS = {
     "logo_ocr": True,
     "wordmarks": True,
     "cpu_threads": 0,
+    "device": "auto",
     "model_dir": os.environ.get("OD_MODEL_DIR") or None,
     "timeout": 600,
 }
@@ -54,7 +55,7 @@ _REFS = {}
 def analyze(path: str, **opts) -> dict:
     """Detect objects and logos in an image or a video file. Options (all optional): layers, fps, max_frames,
     object_model, object_threshold, logo_model, logo_prompts, logo_threshold, max_logos_per_frame, brands,
-    brand_refs_dir, embed_model, brand_match_threshold, logo_ocr, wordmarks, cpu_threads, model_dir, timeout,
+    brand_refs_dir, embed_model, brand_match_threshold, logo_ocr, wordmarks, cpu_threads, device, model_dir, timeout,
     stills=[(timestamp, image_path), ...] to analyse given stills instead of sampling the video.
     Boxes are [x0, y0, x1, y1] normalised to 0..1 of the frame. Raises EnricherInputError / EnricherServiceError."""
     unknown = set(opts) - set(DEFAULTS) - {"stills"}
@@ -177,9 +178,25 @@ def _torch(threads: int):
     return torch
 
 
+def _device(o: dict) -> str:
+    """auto = the GPU when torch sees one, else the CPU; cuda fails instead of falling back."""
+    want = str(o["device"]).lower()
+    if want not in ("auto", "cpu", "cuda") and not want.startswith("cuda:"):
+        raise ValueError(f"device must be auto, cpu or cuda[:n], got {o['device']!r}")
+    if want == "cpu":
+        return "cpu"
+    cuda = _torch(0).cuda.is_available()
+    if want == "auto":
+        return "cuda" if cuda else "cpu"
+    if not cuda:
+        raise EnricherServiceError(f"device {want} requested but torch sees no CUDA GPU", reason="tool_missing")
+    return want
+
+
 def _load(kind: str, model_id: str, o: dict):
-    """(model, processor) cached per process. kind: closed | open | embed."""
-    key = (kind, model_id, o["model_dir"])
+    """(model, processor) cached per process and device. kind: closed | open | embed."""
+    device = _device(o)
+    key = (kind, model_id, o["model_dir"], device)
     with _MODELS_LOCK:
         if key in _MODELS:
             return _MODELS[key]
@@ -194,7 +211,7 @@ def _load(kind: str, model_id: str, o: dict):
         }[kind]
         kw = {"cache_dir": o["model_dir"]} if o["model_dir"] else {}
         try:
-            model = auto[0].from_pretrained(model_id, **kw).eval()
+            model = auto[0].from_pretrained(model_id, **kw).eval().to(device)
             proc = auto[1].from_pretrained(model_id, **kw)
         except MemoryError as e:
             raise EnricherServiceError(f"out of memory loading {model_id}", reason="out_of_memory") from e
@@ -215,6 +232,7 @@ def _detector(model_id: str, kind: str, o: dict) -> dict:
         "revision": getattr(model.config, "_commit_hash", None),
         "architecture": model.config.model_type,
         "license_note": "see model card",
+        "device": str(model.device),
     }
     return {"kind": kind, "model": model, "proc": proc, "info": info}
 
@@ -241,11 +259,11 @@ def _detect(torch, det: dict, img: Image.Image, prompts, threshold: float) -> li
 
     def run():
         if prompts is None:
-            out = model(**proc(images=img, return_tensors="pt"))
+            out = model(**proc(images=img, return_tensors="pt").to(model.device))
             r = proc.post_process_object_detection(out, threshold=threshold, target_sizes=[(h, w)])[0]
             labels = [model.config.id2label[int(i)] for i in r["labels"]]
             return r, labels, (w, h)
-        inputs = proc(text=[prompts], images=img, return_tensors="pt")
+        inputs = proc(text=[prompts], images=img, return_tensors="pt").to(model.device)
         out = model(**inputs)
         if arch == "owlv2":
             # OWLv2 pads the image to a square before resizing; boxes are relative to that square
@@ -344,9 +362,9 @@ def _on_white(im: Image.Image) -> Image.Image:
 
 def _embed(torch, model, proc, images: list) -> np.ndarray:
     def run():
-        out = model.get_image_features(**proc(images=images, return_tensors="pt"))
+        out = model.get_image_features(**proc(images=images, return_tensors="pt").to(model.device))
         feats = out if hasattr(out, "norm") else out.pooler_output
-        return (feats / feats.norm(dim=-1, keepdim=True)).float().numpy()
+        return (feats / feats.norm(dim=-1, keepdim=True)).float().cpu().numpy()
 
     return _infer(torch, run, "SigLIP 2 embedding")
 

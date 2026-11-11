@@ -39,6 +39,7 @@
             "help": "also OCR the whole frame and add text lines that read as one of `brands` as wordmark logos",
         },
         "cpu_threads": {"default": 0, "type": "int", "help": "torch intra-op threads, 0 keeps the default"},
+        "device": {"default": "auto", "help": "auto (GPU when torch sees one), cpu, or cuda[:n] (fails without a GPU)"},
         "model_dir": {"default": None, "help": "Hugging Face cache directory (default $OD_MODEL_DIR, else $HF_HOME)"},
         "timeout": {"default": 600, "type": "int", "help": "seconds allowed for ffprobe/ffmpeg frame extraction"},
     },
