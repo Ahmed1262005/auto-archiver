@@ -48,7 +48,7 @@ jobs:
           key: poetry-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies from source only
-        run: poetry install --no-interaction --with dev
+        run: poetry install --no-interaction --with dev --all-extras
 
       - name: Run Core Tests
         run: |
